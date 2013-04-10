@@ -12,10 +12,13 @@ typedef void * thread_t;
  */
 extern thread_t thread_self(void);
 
-/* creer un nouveau thread qui va exécuter la fonction func avec l'argument funcarg.
+/* creer un nouveau thread qui va exécuter la fonction func avec l'argument
+ * funcarg.
  * renvoie 0 en cas de succès, -1 en cas d'erreur.
  */
-extern int thread_create(thread_t *newthread, void *(*func)(void *), void *funcarg);
+extern int thread_create(thread_t *newthread,
+                         void *(*func)(void *),
+                         void *funcarg);
 
 /* passer la main à un autre thread.
  */

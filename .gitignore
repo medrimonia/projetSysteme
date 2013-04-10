@@ -20,3 +20,5 @@
 *.app
 contextes
 test
+example
+example-pthread
