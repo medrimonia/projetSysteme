@@ -72,7 +72,9 @@ int thread_create(thread_t * newthread,
 int thread_yield(){
   struct thread * my_thread = thread_self();
   struct thread * next = next_thread();
-  swapcontext(&my_thread->context, &next->context);
+  if (next != my_thread){
+    swapcontext(&my_thread->context, &next->context);
+  }
   return 0;
 }
 
@@ -88,6 +90,7 @@ int thread_join(thread_t thread, void ** retval){
 
 void thread_exit(void *retval){
   struct thread * my_thread = thread_self();
+  my_thread->status = STATUS_TERMINATED;
   my_thread->retval = retval;
   struct thread * next = next_thread();
   setcontext(&next->context);
