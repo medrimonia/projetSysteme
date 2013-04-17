@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ucontext.h>
+#include <valgrind/valgrind.h>
 
 #define NB_THREADS_MAX 100
 #define STACK_SIZE 64 * 1024
@@ -11,6 +12,7 @@
 
 struct thread{
   ucontext_t context;
+  int stack_id;
   int status;
   void * retval;
 };
@@ -22,6 +24,7 @@ struct thread * threads = NULL;
 int nb_threads = 0;
 int next_thread_create = 0;
 ucontext_t exit_context;
+int exit_context_stack_id;
 
 struct thread * add_thread(){
   threads[next_thread_create].status = 0;
@@ -58,6 +61,10 @@ void initialize_thread_handler(){
   getcontext(&exit_context);
   exit_context.uc_stack.ss_size = STACK_SIZE;
   exit_context.uc_stack.ss_sp = malloc(exit_context.uc_stack.ss_size);
+  exit_context_stack_id =
+    VALGRIND_STACK_REGISTER(exit_context.uc_stack.ss_sp,
+                            exit_context.uc_stack.ss_sp
+                            + exit_context.uc_stack.ss_size);
   exit_context.uc_link = NULL;
   makecontext(&exit_context,(void (*)(void)) thread_exit, 1, 0);
 }
@@ -73,6 +80,10 @@ int thread_create(thread_t * newthread,
   getcontext(new_context);
   new_context->uc_stack.ss_size = STACK_SIZE;
   new_context->uc_stack.ss_sp = malloc(new_context->uc_stack.ss_size);
+  new_thread->stack_id =
+    VALGRIND_STACK_REGISTER(new_context->uc_stack.ss_sp,
+                            new_context->uc_stack.ss_sp
+                            + new_context->uc_stack.ss_size);
   new_context->uc_link = &exit_context;
   makecontext(new_context, (void (*)(void)) func, 1, funcarg);
   *newthread = (void *)new_thread;
