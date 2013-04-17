@@ -21,14 +21,17 @@ int current_thread = 0;
 struct thread * threads = NULL;
 int nb_threads = 0;
 int next_thread_create = 0;
+ucontext_t exit_context;
 
 struct thread * add_thread(){
   threads[next_thread_create].status = 0;
   threads[next_thread_create].retval = NULL;
+  threads[next_thread_create].context.uc_link = &exit_context;
   nb_threads++;
   return &threads[next_thread_create++];
 }
 
+// switch to next thread
 struct thread * next_thread(){
   int next = current_thread;
   do{
@@ -43,12 +46,20 @@ struct thread * next_thread(){
 }
 
 thread_t thread_self(){
+  if (next_thread_create == 0){
+    return threads;
+  }
   return &threads[current_thread];
 }
 
 void initialize_thread_handler(){
   threads = malloc(NB_THREADS_MAX * sizeof(struct thread));
   struct thread * this_thread = add_thread();
+  getcontext(&exit_context);
+  exit_context.uc_stack.ss_size = STACK_SIZE;
+  exit_context.uc_stack.ss_sp = malloc(exit_context.uc_stack.ss_size);
+  exit_context.uc_link = NULL;
+  makecontext(&exit_context,(void (*)(void)) thread_exit, 1, 0);
 }
 
 int thread_create(thread_t * newthread,
@@ -62,7 +73,7 @@ int thread_create(thread_t * newthread,
   getcontext(new_context);
   new_context->uc_stack.ss_size = STACK_SIZE;
   new_context->uc_stack.ss_sp = malloc(new_context->uc_stack.ss_size);
-  new_context->uc_link = NULL;
+  new_context->uc_link = &exit_context;
   makecontext(new_context, (void (*)(void)) func, 1, funcarg);
   *newthread = (void *)new_thread;
   //printf("thread created : %p\n", *newthread);
@@ -71,7 +82,7 @@ int thread_create(thread_t * newthread,
 
 int thread_yield(){
   if (next_thread_create == 0){
-    initialize_thread_handler();
+    return 0;
   }
   struct thread * my_thread = thread_self();
   struct thread * next = next_thread();
@@ -92,6 +103,7 @@ int thread_join(thread_t thread, void ** retval){
 }
 
 void thread_exit(void *retval){
+  printf("Going through thread exit\n");
   struct thread * my_thread = thread_self();
   my_thread->status = STATUS_TERMINATED;
   my_thread->retval = retval;
