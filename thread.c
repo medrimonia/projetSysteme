@@ -120,4 +120,5 @@ void thread_exit(void *retval){
   my_thread->retval = retval;
   struct thread * next = next_thread();
   setcontext(&next->context);
+  exit(EXIT_SUCCESS);
 }
