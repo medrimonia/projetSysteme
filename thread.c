@@ -70,6 +70,9 @@ int thread_create(thread_t * newthread,
 }
 
 int thread_yield(){
+  if (next_thread_create == 0){
+    initialize_thread_handler();
+  }
   struct thread * my_thread = thread_self();
   struct thread * next = next_thread();
   if (next != my_thread){
