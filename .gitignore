@@ -22,3 +22,6 @@ contextes
 test
 example
 example-pthread
+
+# vim swp
+*.swp
