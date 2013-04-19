@@ -30,7 +30,7 @@ int exit_context_stack_id;
 struct thread * add_thread(){
   threads[next_thread_create].status = 0;
   threads[next_thread_create].retval = NULL;
-  threads[next_thread_create].context.uc_link = &exit_context;
+  threads[next_thread_create].context.uc_link = NULL;
   nb_threads++;
   return &threads[next_thread_create++];
 }
@@ -47,6 +47,12 @@ struct thread * next_thread(){
       return &threads[next];
     }
   }while(1);
+}
+
+void wrapper(void *(*func)(void *), void * funcarg){
+  struct thread * this_thread = thread_self();
+  void * retval = func(funcarg);
+  thread_exit(retval);
 }
 
 thread_t thread_self(){
@@ -95,8 +101,8 @@ int thread_create(thread_t * newthread,
     VALGRIND_STACK_REGISTER(new_context->uc_stack.ss_sp,
                             new_context->uc_stack.ss_sp
                             + new_context->uc_stack.ss_size);
-  new_context->uc_link = &exit_context;
-  makecontext(new_context, (void (*)(void)) func, 1, funcarg);
+  new_context->uc_link = NULL;
+  makecontext(new_context, (void (*)(void)) wrapper, 2, func, funcarg);
   *newthread = (void *)new_thread;
   return 0;
 }
