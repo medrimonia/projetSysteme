@@ -1,0 +1,4 @@
+# bin files
+*.aux
+*.log
+*.pdf
