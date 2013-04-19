@@ -1,5 +1,6 @@
 #include "thread.h"
 
+#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ucontext.h>
@@ -18,6 +19,8 @@ struct thread{
   void * retval;
 };
 
+GList *threadss = NULL;
+
 /* L'identifiant du thread est mis à jour au fur et à mesure
  */
 int current_thread = 0;
@@ -32,6 +35,7 @@ struct thread * add_thread(){
   threads[next_thread_create].status = 0;
   threads[next_thread_create].retval = NULL;
   threads[next_thread_create].context.uc_link = NULL;
+  threadss = g_list_append(threadss, &threads[next_thread_create]);
   nb_threads++;
   return &threads[next_thread_create++];
 }
