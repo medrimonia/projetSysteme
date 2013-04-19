@@ -9,6 +9,7 @@
 #define STACK_SIZE 64 * 1024
 #define STATUS_TERMINATED 1
 
+void initialize_thread_handler();
 
 struct thread{
   ucontext_t context;
@@ -57,7 +58,7 @@ void wrapper(void *(*func)(void *), void * funcarg){
 
 thread_t thread_self(){
   if (next_thread_create == 0){
-    return threads;
+    initialize_thread_handler();
   }
   return &threads[current_thread];
 }
@@ -138,10 +139,12 @@ void thread_exit(void *retval){
   my_thread->status = STATUS_TERMINATED;
   my_thread->retval = retval;
   VALGRIND_STACK_DEREGISTER(my_thread->stack_id);
+  if (nb_threads == 1)
+    exit(EXIT_SUCCESS);
   struct thread * next = next_thread();
   ucontext_t next_context = next->context;
   nb_threads--;
   nb_threads_waiting_join++;
   setcontext(&next_context);
-  exit(EXIT_SUCCESS);
+  exit(EXIT_FAILURE);
 }
