@@ -22,6 +22,7 @@ struct thread{
 int current_thread = 0;
 struct thread * threads = NULL;
 int nb_threads = 0;
+int nb_threads_waiting_join = 0;
 int next_thread_create = 0;
 ucontext_t exit_context;
 int exit_context_stack_id;
@@ -69,6 +70,16 @@ void initialize_thread_handler(){
   makecontext(&exit_context,(void (*)(void)) thread_exit, 1, 0);
 }
 
+void end_thread_handling(){
+  VALGRIND_STACK_DEREGISTER(exit_context_stack_id);
+  free(exit_context.uc_stack.ss_sp);
+  free(threads);
+  nb_threads = 0;
+  current_thread = 0;
+  threads = NULL;
+  next_thread_create = 0;
+}
+
 int thread_create(thread_t * newthread,
                   void *(*func)(void *),
                   void * funcarg){
@@ -108,8 +119,11 @@ int thread_join(thread_t thread, void ** retval){
   while(to_wait->status != STATUS_TERMINATED){
     thread_yield();
   }
+  nb_threads_waiting_join--;
   if (retval != NULL)
     *retval = to_wait->retval;
+  if (nb_threads == 1 && nb_threads_waiting_join == 0)
+    end_thread_handling();
   return 0;
 }
 
@@ -118,7 +132,13 @@ void thread_exit(void *retval){
   struct thread * my_thread = thread_self();
   my_thread->status = STATUS_TERMINATED;
   my_thread->retval = retval;
+  VALGRIND_STACK_DEREGISTER(my_thread->stack_id);
+  free(my_thread->context.uc_stack.ss_sp);
   struct thread * next = next_thread();
-  setcontext(&next->context);
+  ucontext_t next_context = next->context;
+  nb_threads--;
+  nb_threads_waiting_join++;
+  printf("Nb threads : %d\n", nb_threads);
+  setcontext(&next_context);
   exit(EXIT_SUCCESS);
 }
