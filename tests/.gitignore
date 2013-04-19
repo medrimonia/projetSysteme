@@ -1,9 +1,3 @@
-01-main
-02-switch
-11-join
-12-join-main
-21-create-many
-22-create-many-recursive
-31-switch-many
-32-switch-many-join
-51-fibonacci
+*.test
+*.output
+*.valgrind

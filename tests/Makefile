@@ -1,22 +1,63 @@
 CFLAGS= -g -I..
 
-01-main: 01-main.o thread.o
+SRC=$(wildcard *.c)
 
-02-switch: 02-switch.o thread.o
+TESTS=$(SRC:.c=.test)
 
-11-join: 11-join.o thread.o
+RESULTS=$(SRC:.c=.output)
 
-12-join-main: 12-join-main.o thread.o
+VALGRINDS=$(SRC:.c=.valgrind)
 
-21-create-many: 21-create-many.o thread.o
+all: $(RESULTS) $(VALGRINDS)
 
-22-create-many-recursive: 22-create-many-recursive.o thread.o
+tests: $(TESTS)
 
-31-switch-many: 31-switch-many.o thread.o
+%.output: %.test
+	./$< > $@
 
-32-switch-many-join: 32-switch-many-join.o thread.o
+21-create-many.output: 21-create-many.test
+	./$< 50 > $@
 
-51-fibonacci: 51-fibonacci.o thread.o
+22-create-many-recursive.output: 22-create-many-recursive.test
+	./$< 50 > $@
+
+31-switch-many.output: 31-switch-many.test
+	./$< 50 4 > $@
+
+32-switch-many-join.output: 32-switch-many-join.test
+	./$< 50 4 > $@
+
+51-fibonacci.output: 51-fibonacci.test
+	./$< 9 > $@
+
+%.valgrind: %.test
+	valgrind ./$< > /dev/null 2> $@
+
+21-create-many.valgrind: 21-create-many.test
+	valgrind ./$< 50 > /dev/null 2> $@
+
+22-create-many-recursive.valgrind: 22-create-many-recursive.test
+	valgrind ./$< 50 > /dev/null 2> $@
+
+31-switch-many.valgrind: 31-switch-many.test
+	valgrind ./$< 50 4 > /dev/null 2> $@
+
+32-switch-many-join.valgrind: 32-switch-many-join.test
+	valgrind ./$< 50 4 > /dev/null 2> $@
+
+51-fibonacci.valgrind: 51-fibonacci.test
+	valgrind ./$< 9 > /dev/null 2> $@
+
+%.test: %.o thread.o
+	$(CC) $(LDFLAGS) $^ -o $@
 
 thread.o: ../thread.c
 	$(CC) -c $(CFLAGS) $< -o $@
+
+clean:
+	rm -rf *.o
+
+mrproper: clean
+	rm -rf *.test
+	rm -rf *.output
+	rm -rf *.valgrind
