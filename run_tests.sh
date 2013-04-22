@@ -45,10 +45,8 @@ NB_MEMORY_OK=0
 
 for ((i = 0; i < ${#TESTS[@]} ; i++))
 do
-		VALGRIND_OUT=${TESTS[i]%.test}.valgrind.output
-		VALGRIND_ERR=${TESTS[i]%.test}.valgrind.error
-		valgrind ./${TESTS[i]} >${VALGRIND_OUT} 2>${VALGRIND_ERR}
-		if grep -Fq "All heap blocks were freed" ${VALGRIND_ERR}
+		VALGRIND_OUT=${TESTS[i]%.test}.valgrind
+		if grep -Fq "All heap blocks were freed" ${VALGRIND_OUT}
 		then
 				NB_MEMORY_OK=$((NB_MEMORY_OK+1))
 				printf "\e[1;32m"
@@ -56,7 +54,7 @@ do
 				printf "\e[1;31m"
 		fi
 		printf "\033[1m${TESTS[i]}:\033[0m\n"
-		grep "total heap usage" $VALGRIND_ERR
+		grep "total heap usage" $VALGRIND_OUT
 		printf "\e[0m\n"
 done
 
