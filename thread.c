@@ -144,8 +144,10 @@ int thread_join(thread_t thread, void ** retval){
   nb_threads_waiting_join--;
   if (retval != NULL)
     *retval = to_wait->retval;
-  free(to_wait->context.uc_stack.ss_sp);
-  VALGRIND_STACK_DEREGISTER(to_wait->stack_id);
+  if (to_wait != threads){//Stack of first thread shouldn't be freed
+    free(to_wait->context.uc_stack.ss_sp);
+    VALGRIND_STACK_DEREGISTER(to_wait->stack_id);
+  }
   if (nb_threads == 1 && nb_threads_waiting_join == 0)
     end_thread_handling();
   return 0;
