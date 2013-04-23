@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass{article}
 
 \usepackage[french]{babel}
 \usepackage[utf8]{inputenc}
@@ -29,7 +29,7 @@ moins proche des pthreads.
  \item expérimenter le changement de contexte pour de vrai
  \end{itemize}
 
-\section*{1) Implémentation}
+\section{Implémentation}
  
  	Dans cette partie, nous allons expliquer comment nous avons implémenté une
 bibliothèque de gestion de threads qui propose un ordonnancement coopératif.
@@ -61,7 +61,7 @@ void* & retval
   retour
 \end{itemize}
 
-\subsection*{1-a) La création de threads}
+\subsection{La création de threads}
 La fonction \textbf{thread\_create} va se charger de créer un nouveau thread.
 Pour cela, elle va initialiser le gestionnaire de threads (si nécessaire). De la
 mémoire va être allouée à la nouvelle pile de threads. Elle prend en argument
@@ -76,7 +76,7 @@ En cas d'échec elle renvoie -1.
 On utilise la fonction \textbf{initialize\_thread\_handler} qui va allouer la
 mémoire, et initialiser tout ce qui est nécessaire au gestionnaire de threads.
 
-\subsection*{1-b) La gestion des threads lors d'un passage de main}
+\subsection{La gestion des threads lors d'un passage de main}
 La fonction \textbf{thread\_yield}, gère l'échange entre deux threads.
 Si il y a plusieurs threads, qui tournent en même temps, celle-ci va faire un
 \textbf{swap\_context} sur le prochain thread.
@@ -86,7 +86,7 @@ Celle-ci retourne l'adresse du thread courant. Si le gestionnaire de threads
 n'est pas encore initialisé, elle le lance et retourne une adresse valide.
 Ainsi que de la fonction \textbf{next\_thread} qui retourne le thread suivant.
 
-\subsection*{1-c) La fin d'exécution de threads}
+\subsection{La fin d'exécution de threads}
 La fonction \textbf{thread\_join} est chargée d'attendre la fin d'exécution
 d'un thread et de garder en mémoire la valeur de retour du thread.
 Elle reçoit donc en argument un \textbf{thread} et le pointeur \textbf{retval}
@@ -100,7 +100,7 @@ passer d'un thread à un autre quand le premier termine.
 On utilise aussi la fonction \textbf{end\_thread\_handling} qui va libérer
 toute la mémoire utilisée par le gestionnaire de thread.
 
-\subsection*{1-d) La destruction de threads}
+\subsection{La destruction de threads}
 La fonction \textbf{thread\_exit} est chargée de terminer le thread courant en
 renvoyant la valeur de retour de celui-ci.
 Celle-ci reçoit en paramètre \textbf{retval} qui va servir à stocker la valeur
@@ -110,7 +110,7 @@ On utilise ensuite la fonction \textbf{next\_thread} pour permettre au thread
 suivant de continuer son exécution.
 Cette fonction ne libère pas de mémoire dans la pile.
 
-\section*{2) Tests}
+\section{Tests}
 
 Notre programme fonctionne correctement avec tous les programmes de tests
 données : 
@@ -133,7 +133,7 @@ d'exécution en fonction du paramètre d'entrée.
 Enfin nous traiterons la complexité du code mis en place.
 
 
-\section*{3) Objectifs futurs}
+\section{Objectifs futurs}
 Dans la deuxième partie du projet nous avons pensé développer les 2 points
 suivants.
 Une adaptation du programme pour une machine multiprocesseurs, où plusieurs
