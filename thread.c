@@ -21,7 +21,7 @@ struct thread{
 GList *threads = NULL;
 
 /* L'identifiant du thread est mis à jour au fur et à mesure
- */
+*/
 int current_thread = 0;
 int nb_threads = 0;
 int nb_threads_waiting_join = 0;
