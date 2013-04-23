@@ -16,8 +16,42 @@
 \maketitle
 
 \section*{Introduction}
+ 
+ L'objectif de ce projet, est de construire une bibliothèque de threads. Pour cela, il faudra fournir à l'utilisateur une interface de programmation plus ou moins proche des pthreads.
+ Cependant l'exécution devra se faire sur un seul thread noyau.
+ Ceci permettra de :
+ \\
+ \begin{itemize}
+ \item diminuer fortement les coûts d'ordonnancement
+ \item configurer les politiques d'ordonnancement
+ \item expérimenter le changement de contexte pour de vrai
+ \end{itemize}
 
 \section*{1) Implémentation}
+ 
+ 	Dans cette partie, nous allons expliquer comment nous avons implémenté une bibliothèque de gestion de threads qui propose un ordonnancement coopératif. Après avoir d'abord stockés les threads dans un tableau, nous avons mis en place une liste de threads.%expliquer pourquoi
+ \\
+	Tout d'abord, nous avons implémenté une interface de threads. De telle manière que l'on puisse, créer des threads, les détruires, passer la main ainsi que récupérer leur identifiant. Nous avons fait en sorte de rester le plus possible de thread.h. 
+
+\subsection*{1-a) La création de threads}
+La fonction \textsc{thread\_create} va se charger de créer un nouveau thread. Pour cela, elle va initialiser le gestionnaire de threads (si nécessaire). De la mémoire va être allouée à la nouvelle pile de threads. Elle prend en argument une fonction \textsc{func} et un argument \textsc{funcarg}.
+\\
+Elle renvoie 0 en cas de succès et lance le context \textsc{wrapper} qui va exécuter la fonction \textsc{func} avec l'argument \textsc{funcarg}.
+En cas d'échec elle renvoie -1.
+
+
+\subsection*{1-b) La gestion des threads lors d'un passage de main}
+La fonction \textsc{thread\_yield}, gère l'échange entre deux threads.
+Si il y a plusieurs threads, qui tournent en même temps, celle-ci va faire un \textsc{swap\_context} sur le prochain thread.
+Dans tous les autres cas elle renvoie simplement 0.
+
+\subsection*{1-c) La fin d'exécution de threads}
+La fonction \textsc{thread\_join} est chargée d'attendre la fin d'exécution d'un thread et de garder en mémoire la valeur de retour du thread.
+Elle reçoit donc en argument un \textsc{thread} et le pointeur \textsc{retval} qui va stocker la valeur de retour du thread.
+Pour cela on va utiliser la fonction \textsc{thread_self}
+
+
+\subsection*{1-d) La destruction de threads}
 
 \section*{2) Tests}
 
