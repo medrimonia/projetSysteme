@@ -32,29 +32,89 @@
  	Dans cette partie, nous allons expliquer comment nous avons implémenté une bibliothèque de gestion de threads qui propose un ordonnancement coopératif. Après avoir d'abord stockés les threads dans un tableau, nous avons mis en place une liste de threads.%expliquer pourquoi
  \\
 	Tout d'abord, nous avons implémenté une interface de threads. De telle manière que l'on puisse, créer des threads, les détruires, passer la main ainsi que récupérer leur identifiant. Nous avons fait en sorte de rester le plus possible de thread.h. 
+\\
+Nous avons utilisé la structure suivante pour l'ensemble des threads
+\\
+\[
+\left\{
+\begin{array}{r c }
+ucontext\_t &context\\
+int &stack\_id\\
+int & status\\
+void* & retval
+\end{array}
+\right.
+\]
+\\
+\begin{itemize}
+\item stack\_id : utilisé pour travailler efficacement avec valgrind
+\item status : nécessaire pour une fin d'exécution propre
+\item retval : utilisé pour finir l'exécution et pour stocker la valeur de retour
+\end{itemize}
 
 \subsection*{1-a) La création de threads}
-La fonction \textsc{thread\_create} va se charger de créer un nouveau thread. Pour cela, elle va initialiser le gestionnaire de threads (si nécessaire). De la mémoire va être allouée à la nouvelle pile de threads. Elle prend en argument une fonction \textsc{func} et un argument \textsc{funcarg}.
+La fonction \textbf{thread\_create} va se charger de créer un nouveau thread. Pour cela, elle va initialiser le gestionnaire de threads (si nécessaire). De la mémoire va être allouée à la nouvelle pile de threads. Elle prend en argument une fonction \textbf{func} et un argument \textbf{funcarg}.
 \\
-Elle renvoie 0 en cas de succès et lance le context \textsc{wrapper} qui va exécuter la fonction \textsc{func} avec l'argument \textsc{funcarg}.
+Elle renvoie 0 en cas de succès et lance le contexte \textbf{wrapper} qui va exécuter la fonction \textbf{func} avec l'argument \textbf{funcarg}.
+Cette fonction \textbf{wrapper} va s'assurer que la valeur retournée sera gardée en mémoire et que le thread pourra alors appeler \textbf{thread\_exit} avant sa destruction.
 En cas d'échec elle renvoie -1.
-
+On utilise la fonction \textbf{initialize\_thread\_handler} qui va allouer la mémoire, et initialiser tout ce qui est nécessaire au gestionnaire de threads.
 
 \subsection*{1-b) La gestion des threads lors d'un passage de main}
-La fonction \textsc{thread\_yield}, gère l'échange entre deux threads.
-Si il y a plusieurs threads, qui tournent en même temps, celle-ci va faire un \textsc{swap\_context} sur le prochain thread.
+La fonction \textbf{thread\_yield}, gère l'échange entre deux threads.
+Si il y a plusieurs threads, qui tournent en même temps, celle-ci va faire un \textbf{swap\_context} sur le prochain thread.
 Dans tous les autres cas elle renvoie simplement 0.
+Pour cela on va utiliser la fonction \textbf{thread\_self}.
+Celle-ci retourne l'adresse du thread courant. Si le gestionnaire de threads n'est pas encore initialisé, elle le lance et retourne une adresse valide.
+Ainsi que de la fonction \textbf{next\_thread} qui retourne le thread suivant.
 
 \subsection*{1-c) La fin d'exécution de threads}
-La fonction \textsc{thread\_join} est chargée d'attendre la fin d'exécution d'un thread et de garder en mémoire la valeur de retour du thread.
-Elle reçoit donc en argument un \textsc{thread} et le pointeur \textsc{retval} qui va stocker la valeur de retour du thread.
-Pour cela on va utiliser la fonction \textsc{thread_self}
-
+La fonction \textbf{thread\_join} est chargée d'attendre la fin d'exécution d'un thread et de garder en mémoire la valeur de retour du thread.
+Elle reçoit donc en argument un \textbf{thread} et le pointeur \textbf{retval} qui va stocker la valeur de retour du thread.
+Si à la fin de l'exécution du thread, il n'y a plus aucun thread à terminer, toutes les ressources utilisées sont libérées. Ce choix pourrait engendrer un problème. En effet, une adresse obtenue par l'appel de la fonction \textbf{thread\_self} ne pourrait ne plus être valide.
+Pour cela on utilise la fonction \textbf{thread\_yield}, indispensable pour passer d'un thread à un autre quand le premier termine.
+On utilise aussi la fonction \textbf{end\_thread\_handling} qui va libérer toute la mémoire utilisée par le gestionnaire de thread.
 
 \subsection*{1-d) La destruction de threads}
+La fonction \textbf{thread\_exit} est chargée de terminer le thread courant en renvoyant la valeur de retour de celui-ci.
+Celle-ci reçoit en paramètre \textbf{retval} qui va servir à stocker la valeur de retour. On utilise la fonction \textbf{thread\_self} pour récupérer le thread courant afin de le terminer.
+On utilise ensuite la fonction \textbf{next\_thread} pour permettre au thread suivant de continuer son exécution.
+Cette fonction ne libère pas de mémoire dans la pile.
 
 \section*{2) Tests}
 
+Notre programme fonctionne correctement avec tous les programmes de tests données : 
+\begin{itemize}
+\item 01-main.c
+\item 02-switch.c	
+\item 11-join.c	
+\item 12-join-main.c	
+\item 21-create-many.c	
+\item 22-create-many-recursive.c	
+\item 31-switch-many.c	
+\item 32-switch-many-join.c	
+\item 51-fibonacci.c	
+\end{itemize}
+De plus valgrind nous confirme qu'il n'y a jusqu'à présent aucune fuite mémoire
+
+Cependant, il nous reste à ajouter des programmes de tests, des applications générants beaucoup de threads. De plus, on pourra ajouter une courbe de temps d'exécution en fonction du paramètre d'entrée.
+Enfin nous traiterons la complexité du code mis en place.
+
+
 \section*{3) Objectifs futurs}
+Dans la deuxième partie du projet nous avons pensé développer les 2 points suivants.
+Une adaptation du programme pour une machine multiprocesseurs, où plusieurs threads noyaux pourront exécuter les threads utilisateurs en même temps, ceci à l’aide de fonctions de verrouillage et synchronisation.
+La performance du programme sera étudiée en fonction de cet ajout.
+La préemption qui peut prendre la forme d’une préemption pseudo-coopérative où une préemption est cachée dans toutes les fonctions de la bibliothèque (par exemple dans \textbf{thread\_self()}) ou bien d’une vraie préemption utilisant par exemple des signaux.
+Ces développements nous ont paru particulièrement intéressants vis-à-vis de ce qui nous a été demandé dans le sujet et par rapport à nos connaissances sur ce sujet.
+
+Nous pensons aussi effectuer des tests de performance plus longs permettant de vérifier le nombre de parcours de notre liste , et la pertinence du parcours de notre liste dans certains cas.
+Nous devons aussi illustrer nos différents tests déjà passés avec des graphes montrant la courbe de temps d'exécution selon la valeur en argument des fonctions, et la comparer aux performances des pthreads.
+
+
 
 \end{document}
+
+ 
+
+
