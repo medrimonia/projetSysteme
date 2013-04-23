@@ -33,13 +33,14 @@ moins proche des pthreads.
  
  	Dans cette partie, nous allons expliquer comment nous avons implémenté une
 bibliothèque de gestion de threads qui propose un ordonnancement coopératif.
-Après avoir d'abord stockés les threads dans un tableau, nous avons mis en place
-une liste de threads.%expliquer pourquoi
+Ayant commencé par stocker les threads dans un tableau afin d'attaquer directement
+les problématiques systèmes et d'avoir rapidement une version fonctionnelle, nous
+sommes à présent en train de passer vers un stockage à base de listes.
  \\
 	Tout d'abord, nous avons implémenté une interface de threads. De telle manière
 que l'on puisse, créer des threads, les détruires, passer la main ainsi que
-récupérer leur identifiant. Nous avons fait en sorte de rester le plus possible
-de thread.h. 
+récupérer leur identifiant. Nous avons fait en sorte de rester le plus près
+possible de thread.h.
 \\
 Nous avons utilisé la structure suivante pour l'ensemble des threads
 \\
@@ -108,7 +109,8 @@ de retour. On utilise la fonction \textbf{thread\_self} pour récupérer le
 thread courant afin de le terminer.
 On utilise ensuite la fonction \textbf{next\_thread} pour permettre au thread
 suivant de continuer son exécution.
-Cette fonction ne libère pas de mémoire dans la pile.
+Cette fonction ne libère pas la mémoire allouée pour la pile du thread qui se
+termine.
 
 \section{Tests}
 
@@ -125,7 +127,12 @@ données :
 \item \verb!32-switch-many-join.c!	
 \item \verb!51-fibonacci.c!	
 \end{itemize}
-De plus valgrind nous confirme qu'il n'y a jusqu'à présent aucune fuite mémoire
+De plus valgrind nous confirme que pour 7 des tests, il n'y a pas de fuites
+mémoires. Nos investigations sur les fuites des mémoires pour les deux tests qui
+ont échoués nous ont permis de voir que ces fuites de mémoires ne sont pas
+importantes, les free manquants concernant uniquement la pile du dernier thread en
+exécution ainsi que le tableau de threads. Une exécution prolongée n'aggravera donc
+pas celles-ci.
 
 Cependant, il nous reste à ajouter des programmes de tests, des applications
 générants beaucoup de threads. De plus, on pourra ajouter une courbe de temps
@@ -149,7 +156,7 @@ qui nous a été demandé dans le sujet et par rapport à nos connaissances sur 
 sujet.
 
 Nous pensons aussi effectuer des tests de performance plus longs permettant de
-vérifier le nombre de parcours de notre liste , et la pertinence du parcours de
+vérifier le nombre de parcours de notre liste, et la pertinence du parcours de
 notre liste dans certains cas.
 Nous devons aussi illustrer nos différents tests déjà passés avec des graphes
 montrant la courbe de temps d'exécution selon la valeur en argument des
