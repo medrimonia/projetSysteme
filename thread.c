@@ -46,16 +46,16 @@ struct thread * next_thread(){
   struct thread *next_running, *running;
   running = g_list_nth_data(threads, next);
   next_running = g_list_nth_data(threads, ++next);
+  if(next_running == NULL) {
+    next_running = (struct thread*) g_list_first(threads);
+  }
   while (running != next_running) {
-    if(running == NULL) {
-      next_running = (struct thread*) g_list_first(threads);
-    }
-    else if ((next_running = (struct thread*) g_list_next(threads)) == NULL) {
-      next_running = (struct thread*) g_list_first(threads);
-    }
     if(next_running->status != STATUS_TERMINATED) {
       current_thread = g_list_index(threads, next_running);
       return next_running;
+    }
+    if ((next_running = (struct thread*) g_list_next(threads)) == NULL) {
+      next_running = (struct thread*) g_list_first(threads);
     }
   }
   return NULL;
@@ -65,11 +65,12 @@ void wrapper(void *(*func)(void *), void * funcarg){
   void * retval = func(funcarg);
   thread_exit(retval);
 }
+
 thread_t thread_self(){
   if (next_thread_create == 0){
     initialize_thread_handler();
   }
-  return g_list_nth_data(threads, current_thread);
+  return (struct thread *) g_list_nth_data(threads, current_thread);
 }
 
 void initialize_thread_handler(){
