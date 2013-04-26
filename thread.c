@@ -133,7 +133,7 @@ int thread_yield(){
   }
   struct thread * my_thread = thread_self();
   struct thread * next = next_thread();
-  if (next != my_thread){
+  if (next != NULL && next != my_thread){
     swapcontext(&my_thread->context, &next->context);
   }
   return 0;
