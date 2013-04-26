@@ -6,7 +6,6 @@
 #include <ucontext.h>
 #include <valgrind/valgrind.h>
 
-#define NB_THREADS_MAX 100
 #define STACK_SIZE 64 * 1024
 #define STATUS_TERMINATED 1
 
@@ -22,41 +21,50 @@ struct thread{
   void * retval;
 };
 
-GList *threadss = NULL;
+GList *threads = NULL;
+
+/* L'identifiant du thread est mis à jour au fur et à mesure
+*/
 int current_thread = 0;
-/* This array of threads will be repaced by a list */
-struct thread * threads = NULL;
 int nb_threads = 0;
 int nb_threads_waiting_join = 0;
 int next_thread_create = 0;
 
 struct thread * add_thread(){
-  threads[next_thread_create].status = 0;
-  threads[next_thread_create].retval = NULL;
-  threads[next_thread_create].context.uc_link = NULL;
-  threadss = g_list_append(threadss, &threads[next_thread_create]);
+  struct thread *to_add = malloc(sizeof(struct thread));
+  to_add->status = 0;
+  to_add->retval = NULL;
+  to_add->context.uc_link = NULL;
+  threads = g_list_append(threads, &to_add);
   nb_threads++;
-  return &threads[next_thread_create++];
+  next_thread_create++;
+  return to_add;
 }
 
 // switch to next thread
 struct thread * next_thread(){
   int next = current_thread;
-  do{
-    next++;
-    if (next == next_thread_create)
-      next = 0;
-    if (threads[next].status != STATUS_TERMINATED){
-      current_thread = next;
-      return &threads[next];
+  struct thread *next_running, *running;
+  running = g_list_nth_data(threads, next);
+  next_running = g_list_nth_data(threads, ++next);
+  if(next_running == NULL) {
+    next_running = (struct thread*) g_list_first(threads);
+  }
+  while (running != next_running) {
+    if(next_running->status != STATUS_TERMINATED) {
+      current_thread = g_list_index(threads, next_running);
+      return next_running;
     }
-  }while(1);
+    if ((next_running = (struct thread*) g_list_next(threads)) == NULL) {
+      next_running = (struct thread*) g_list_first(threads);
+    }
+  }
+  return NULL;
 }
 /* The wrapper function ensure that the return value will be saved
  * and that the thread will call thread_exit before dying
  */
 void wrapper(void *(*func)(void *), void * funcarg){
-  struct thread * this_thread = thread_self();
   void * retval = func(funcarg);
   thread_exit(retval);
 }
@@ -68,20 +76,19 @@ thread_t thread_self(){
   if (next_thread_create == 0){
     initialize_thread_handler();
   }
-  return &threads[current_thread];
+  return (struct thread *) g_list_nth_data(threads, current_thread);
 }
 
 /* Allocate memory and initialize everything needed for thread handling
  */
 void initialize_thread_handler(){
-  threads = malloc(NB_THREADS_MAX * sizeof(struct thread));
   struct thread * this_thread = add_thread();
 }
 
 /* Free all the memory used for thread handling
  */
 void end_thread_handling(){
-  free(threads);
+  g_list_free(threads);
   nb_threads = 0;
   current_thread = 0;
   threads = NULL;
@@ -94,8 +101,8 @@ void end_thread_handling(){
  * arguments specified.
  */
 int thread_create(thread_t * newthread,
-                  void *(*func)(void *),
-                  void * funcarg){
+    void *(*func)(void *),
+    void * funcarg){
   if (next_thread_create == 0){
     initialize_thread_handler();
   }
@@ -106,8 +113,8 @@ int thread_create(thread_t * newthread,
   new_context->uc_stack.ss_sp = malloc(new_context->uc_stack.ss_size);
   new_thread->stack_id =
     VALGRIND_STACK_REGISTER(new_context->uc_stack.ss_sp,
-                            new_context->uc_stack.ss_sp
-                            + new_context->uc_stack.ss_size);
+        new_context->uc_stack.ss_sp
+        + new_context->uc_stack.ss_size);
   new_context->uc_link = NULL;
   makecontext(new_context, (void (*)(void)) wrapper, 2, func, funcarg);
   *newthread = (void *)new_thread;
