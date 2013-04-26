@@ -1,10 +1,16 @@
-If your application uses modules, it must be compiled and linked with the options returned by one of the following pkg-config invocations:
+If your application uses modules, it must be compiled and linked with
+the options returned by one of the following pkg-config invocations:
 
-$ pkg-config --cflags --libs gmodule-no-export-2.0 
-$ pkg-config --cflags --libs gmodule-2.0 
+$ pkg-config --cflags --libs gmodule-no-export-2.0 $ pkg-config
+--cflags --libs gmodule-2.0
 
-The difference between the two is that gmodule-2.0 adds --export-dynamic to the linker flags, which is often not needed.
+The difference between the two is that gmodule-2.0 adds
+--export-dynamic to the linker flags, which is often not needed.
 
-The simplest way to compile a program is to use the "backticks" feature of the shell. If you enclose a command in backticks (not single quotes), then its output will be substituted into the command line before execution. So to compile a GLib Hello, World, you would type the following:
+The simplest way to compile a program is to use the "backticks"
+feature of the shell. If you enclose a command in backticks (not
+single quotes), then its output will be substituted into the command
+line before execution. So to compile a GLib Hello, World, you would
+type the following:
 
 $ cc `pkg-config --cflags --libs glib-2.0` thread.c -Wall -Wextra -c

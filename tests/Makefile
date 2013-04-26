@@ -1,4 +1,6 @@
-CFLAGS= -g -I..
+CFLAGS= -g -I.. `pkg-config --cflags --libs glib-2.0`
+
+LIBS=-lglib-2.0
 
 SRC=$(wildcard *.c)
 
@@ -49,7 +51,7 @@ tests: $(TESTS)
 	valgrind ./$< 9 > /dev/null 2> $@
 
 %.test: %.o thread.o
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(LDFLAGS) $^ -o $@ $(LIBS)
 
 thread.o: ../thread.c
 	$(CC) -c $(CFLAGS) $< -o $@
