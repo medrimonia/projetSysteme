@@ -41,6 +41,8 @@ printf "\033[1m${NB_TESTS_OK} / ${NB_TESTS} tests ok\033[0m\n"
 #CHECKING MEMORY_LEAKS
 printf "\033[25C\033[1m CHECKING MEMORY LEAKS \033[0m\n"
 
+make valgrinds -i >/dev/null 2>/dev/null
+
 NB_MEMORY_OK=0
 
 for ((i = 0; i < ${#TESTS[@]} ; i++))

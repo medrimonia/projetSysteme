@@ -1,4 +1,4 @@
-CFLAGS= -g -I.. `pkg-config --cflags --libs glib-2.0`
+CFLAGS= -Wall -Wextra -g -I.. `pkg-config --cflags --libs glib-2.0`
 
 LIBS=-lglib-2.0
 
@@ -11,6 +11,8 @@ RESULTS=$(SRC:.c=.output)
 VALGRINDS=$(SRC:.c=.valgrind)
 
 all: $(RESULTS) $(VALGRINDS)
+
+valgrinds: $(VALGRINDS)
 
 tests: $(TESTS)
 

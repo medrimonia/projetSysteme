@@ -35,7 +35,7 @@ struct thread * add_thread(){
   to_add->status = 0;
   to_add->retval = NULL;
   to_add->context.uc_link = NULL;
-  threads = g_list_append(threads, &to_add);
+  threads = g_list_append(threads, to_add);
   nb_threads++;
   next_thread_create++;
   return to_add;
@@ -48,15 +48,18 @@ struct thread * next_thread(){
   running = g_list_nth_data(threads, next);
   next_running = g_list_nth_data(threads, ++next);
   if(next_running == NULL) {
-    next_running = (struct thread*) g_list_first(threads);
+    next = 0;
+    next_running = g_list_nth_data(threads, next);
   }
   while (running != next_running) {
     if(next_running->status != STATUS_TERMINATED) {
       current_thread = g_list_index(threads, next_running);
       return next_running;
     }
-    if ((next_running = (struct thread*) g_list_next(threads)) == NULL) {
-      next_running = (struct thread*) g_list_first(threads);
+    next_running = g_list_nth_data(threads, ++next);
+    if (next_running == NULL) {
+      next = 0;
+      next_running = g_list_nth_data(threads, next);
     }
   }
   return NULL;
@@ -149,9 +152,12 @@ int thread_join(thread_t thread, void ** retval){
     thread_yield();
   }
   nb_threads_waiting_join--;
+
   if (retval != NULL)
     *retval = to_wait->retval;
-  if (to_wait != threads){//Stack of first thread shouldn't be freed
+
+//Stack of first thread shouldn't be freed
+  if (to_wait != (struct thread *) g_list_first(threads)->data){
     free(to_wait->context.uc_stack.ss_sp);
     VALGRIND_STACK_DEREGISTER(to_wait->stack_id);
   }
