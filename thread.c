@@ -5,11 +5,13 @@
 #include <stdlib.h>
 #include <ucontext.h>
 #include <valgrind/valgrind.h>
+#include <stdbool.h>
 
 #define STACK_SIZE 64 * 1024
 #define STATUS_TERMINATED 1
 
 void initialize_thread_handler();
+void end_thread_handling();
 
 struct thread{
   ucontext_t context;
@@ -17,6 +19,7 @@ struct thread{
   int stack_id;
   /* Status is needed in order to allow join to work properly */
   int status;
+  bool freeNeeded;
   /* retval is used in join and allow to store the return value */
   void * retval;
 };
@@ -33,6 +36,7 @@ int next_thread_create = 0;
 struct thread * add_thread(){
   struct thread *to_add = malloc(sizeof(struct thread));
   to_add->status = 0;
+  to_add->freeNeeded = true;
   to_add->retval = NULL;
   to_add->context.uc_link = NULL;
   threads = g_list_append(threads, to_add);
@@ -86,12 +90,24 @@ thread_t thread_self(){
  */
 void initialize_thread_handler(){
   struct thread * this_thread = add_thread();
+  this_thread->freeNeeded = false;
+  atexit(end_thread_handling);
+}
+
+void free_thread(struct thread * t){
+  if (t->freeNeeded){
+    free(t->context.uc_stack.ss_sp);
+    VALGRIND_STACK_DEREGISTER(t->stack_id);
+  }
+  free(t);
 }
 
 /* Free all the memory used for thread handling
  */
 void end_thread_handling(){
-  g_list_free(threads);
+  printf("Cleeeeeeeeeeeaning\n");
+  g_list_free_full(threads,(void (*)(void *)) free_thread);
+  free(threads);
   nb_threads = 0;
   current_thread = 0;
   threads = NULL;
@@ -158,11 +174,8 @@ int thread_join(thread_t thread, void ** retval){
 
 //Stack of first thread shouldn't be freed
   if (to_wait != (struct thread *) g_list_first(threads)->data){
-    free(to_wait->context.uc_stack.ss_sp);
-    VALGRIND_STACK_DEREGISTER(to_wait->stack_id);
+    free_thread(to_wait);
   }
-  if (nb_threads == 1 && nb_threads_waiting_join == 0)
-    end_thread_handling();
   return 0;
 }
 
