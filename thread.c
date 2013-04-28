@@ -175,6 +175,7 @@ int thread_join(thread_t thread, void ** retval){
 //Stack of first thread shouldn't be freed
   if (to_wait != (struct thread *) g_list_first(threads)->data){
     free_thread(to_wait);
+    threads = g_list_remove(threads, to_wait);
   }
   return 0;
 }
