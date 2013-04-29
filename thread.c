@@ -95,7 +95,7 @@ void initialize_thread_handler(){
 }
 
 void free_thread(struct thread * t){
-  if (t->freeNeeded){
+  if (threads != NULL && t->freeNeeded){
     free(t->context.uc_stack.ss_sp);
     VALGRIND_STACK_DEREGISTER(t->stack_id);
   }
@@ -103,11 +103,13 @@ void free_thread(struct thread * t){
 }
 
 /* Free all the memory used for thread handling
- */
+*/
 void end_thread_handling(){
-  printf("Cleeeeeeeeeeeaning\n");
-  g_list_free_full(threads,(void (*)(void *)) free_thread);
-  free(threads);
+  while (threads != NULL) {
+    struct thread *t = g_list_first(threads)->data;
+    threads = g_list_remove(threads, t);
+    free_thread(t); 
+  }
   nb_threads = 0;
   current_thread = 0;
   threads = NULL;
@@ -171,12 +173,11 @@ int thread_join(thread_t thread, void ** retval){
 
   if (retval != NULL)
     *retval = to_wait->retval;
-
-//Stack of first thread shouldn't be freed
-  if (to_wait != (struct thread *) g_list_first(threads)->data){
-    free_thread(to_wait);
-    threads = g_list_remove(threads, to_wait);
+  if (g_list_index(threads, to_wait) < current_thread) {
+    current_thread--;
   }
+  threads = g_list_remove(threads, to_wait);
+  free_thread(to_wait);
   return 0;
 }
 
