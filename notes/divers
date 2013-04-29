@@ -1,0 +1,3 @@
+Gestion de la mémoire :
+- empreinte mémoire constante de glist
+- fuite mémoire due à glist (à vérifier éventuellement, ne pas s'attarder dessus)
