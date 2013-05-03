@@ -3,22 +3,21 @@
 #include <glib.h>
 
 
-struct fifo {
-    Glist *head;
-    Glist *tail;
+struct fifo{
+    GList *head;
+    GList *tail;
     int nb_elements
-}
+};
 
 /* Get the first element of the fifo and removes it
 */
 thread_t dequeue(struct fifo *f) {
-    if(f->head = NULL) {
+    if(f->head == NULL) {
         return NULL;
     }
     else {
         thread_t ret = f->head->data;
-        f->head = f->head->next;
-        g_list_remove(f, ret);
+        f->head = g_list_remove(f->head, ret);
         return ret;
     }
 }
@@ -35,12 +34,12 @@ thread_t head(struct fifo *f) {
 */
 void queue(struct fifo *f, thread_t t) {
     if(f->head == NULL){
-        g_list_append(f->head, t);
+        f->head = g_list_append(f->head, t);
         f->head->next = f->tail;
         f->nb_elements++;
     } 
     else {
-        g_list_append(f->tail, t);
+        f->head = g_list_append(f->tail, t);
         f->tail = f->tail->next;
         f->nb_elements++;
     }

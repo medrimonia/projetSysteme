@@ -58,6 +58,9 @@ tests: $(TESTS)
 thread.o: ../thread.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
+fifo.o: ../fifo.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
 clean:
 	rm -rf *.o
 
