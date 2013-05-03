@@ -8,6 +8,10 @@
  */
 typedef void * thread_t;
 
+struct mutex;
+
+typedef struct mutex * mutex_p;
+
 /* recuperer l'identifiant du thread courant.
  */
 extern thread_t thread_self(void);
@@ -39,5 +43,13 @@ extern int thread_join(thread_t thread, void **retval);
  * n'est pas correctement implémenté (il ne doit jamais retourner).
  */
 extern void thread_exit(void *retval) __attribute__ ((__noreturn__));
+
+mutex_p thread_mutex_init();
+
+void thread_mutex_lock(mutex_p mutex);
+
+void thread_mutex_unlock(mutex_p mutex);
+
+void thread_mutex_destroy(mutex_p mutex);
 
 #endif /* __THREAD_H__ */

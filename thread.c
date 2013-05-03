@@ -6,12 +6,17 @@
 #include <ucontext.h>
 #include <valgrind/valgrind.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #define STACK_SIZE 64 * 1024
 #define STATUS_TERMINATED 1
 
 void initialize_thread_handler();
 void end_thread_handling();
+
+struct mutex{
+    pthread_mutex_t mutex;
+};
 
 struct thread{
   ucontext_t context;
@@ -29,6 +34,7 @@ GList *threads = NULL;
 /* L'identifiant du thread est mis à jour au fur et à mesure
 */
 int current_thread = 0;
+int working_threads = 0;
 int nb_threads = 0;
 int nb_threads_waiting_join = 0;
 int next_thread_create = 0;
@@ -197,4 +203,34 @@ void thread_exit(void *retval){
   nb_threads_waiting_join++;
   setcontext(&next_context);
   exit(EXIT_FAILURE);
+}
+
+
+mutex_p thread_mutex_init(){
+    mutex_p m = malloc(sizeof(struct mutex));
+    pthread_mutex_init(&m->mutex, NULL);
+    //TODO test result
+    return m;
+}
+
+void thread_mutex_lock(mutex_p mutex){
+    int result;
+    while (true){
+        result = pthread_mutex_trylock(&mutex->mutex);
+        if (result == 0)
+            break;
+        if (result != EBUSY){
+            perror("error while trying to lock the mutex");
+        }
+        thread_yield();
+    }
+}
+
+void thread_mutex_unlock(mutex_p mutex){
+    pthread_mutex_unlock(&mutex->mutex);
+}
+
+void thread_mutex_destroy(mutex_p mutex){
+    pthread_mutex_destroy(&mutex->mutex);
+    free(mutex);
 }
