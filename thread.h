@@ -1,12 +1,14 @@
 #ifndef __THREAD_H__
 #define __THREAD_H__
 
+struct thread;
+
 /* identifiant de thread
  * NB: pourra être un entier au lieu d'un pointeur si ca vous arrange,
  *     mais attention aux inconvénient des tableaux de threads
  *     (consommation mémoire, cout d'allocation, ...).
  */
-typedef void * thread_t;
+typedef struct thread * thread_t;
 
 struct mutex;
 

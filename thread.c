@@ -7,12 +7,16 @@
 #include <valgrind/valgrind.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <unistd.h>
 
 #define STACK_SIZE 64 * 1024
 #define STATUS_TERMINATED 1
+#define STATUS_WAITING 0
+#define STATUS_ACTIVE 2
 
 void initialize_thread_handler();
 void end_thread_handling();
+struct thread * next_thread();
 
 struct mutex{
     pthread_mutex_t mutex;
@@ -29,7 +33,61 @@ struct thread{
   void * retval;
 };
 
+struct kernel_thread{
+    ucontext_t context;
+    pthread_t thread;
+    /* Stack_id is used in order to work properly with valgrind */
+    int stack_id;
+};
+
 GList *threads = NULL;
+
+#define MAX_KERNEL_THREADS 4
+
+int nb_kernel_threads = 0;
+struct kernel_thread kernel_threads[MAX_KERNEL_THREADS];
+
+// Sleeping time in ms
+#define SLEEPING_TIME 1000
+
+struct kernel_thread * get_kernel_thread(){
+    pthread_t my_thread = pthread_self();
+    int i;
+    for (i = 0; i < nb_kernel_threads; i++){
+        if (kernel_threads[i].thread == my_thread)
+            return &kernel_threads[i];
+    }
+    return NULL;
+}
+
+pthread_mutex_t kernel_mutex;
+
+void * kernel_thread(void * unused){
+    thread_t n_thread;
+    struct kernel_thread * this = get_kernel_thread();
+    while (true){
+        // Next thread must be thread safe and remove the returned value of
+        // the fifo
+        pthread_mutex_lock(&kernel_mutex);
+        n_thread = next_thread();
+        // if there's no thread available, just sleep a while
+        if (n_thread == NULL){
+            pthread_mutex_unlock(&kernel_mutex);
+            //TODO it might be able to wake the thread with a signal
+            usleep(SLEEPING_TIME);
+        }
+        //if there's a next thread, set status of thread to active and
+        else{
+            n_thread->status = STATUS_ACTIVE;
+            pthread_mutex_unlock(&kernel_mutex);
+            swapcontext(&this->context, &n_thread->context);
+        }
+    }
+}
+
+void initialize_kernel_threads(){
+//TODO
+}
 
 /* L'identifiant du thread est mis à jour au fur et à mesure
 */
@@ -62,7 +120,7 @@ struct thread * next_thread(){
     next_running = g_list_nth_data(threads, next);
   }
   while (running != next_running) {
-    if(next_running->status != STATUS_TERMINATED) {
+    if(next_running->status == STATUS_WAITING) {
       current_thread = g_list_index(threads, next_running);
       return next_running;
     }
@@ -98,6 +156,17 @@ void initialize_thread_handler(){
   struct thread * this_thread = add_thread();
   this_thread->freeNeeded = false;
   atexit(end_thread_handling);
+  ucontext_t * new_context = &kernel_threads[0].context;
+  getcontext(new_context);
+  new_context->uc_stack.ss_size = STACK_SIZE;
+  new_context->uc_stack.ss_sp = malloc(new_context->uc_stack.ss_size);
+  new_thread->stack_id =
+    VALGRIND_STACK_REGISTER(new_context->uc_stack.ss_sp,
+        new_context->uc_stack.ss_sp
+        + new_context->uc_stack.ss_size);
+  new_context->uc_link = NULL;
+  makecontext(new_context, initialize_kernel_threads, 0);
+  swapcontext(&this_thread->context, new_context);
 }
 
 void free_thread(struct thread * t){
