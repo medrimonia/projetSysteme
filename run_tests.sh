@@ -25,7 +25,7 @@ NB_TESTS_OK=0
 for ((i = 0; i < ${#TESTS[@]} ; i++))
 do
     printf "${TESTS[$i]}\033[80D\033[60C"
-    make ${TESTS[$i]%.test}.output >/dev/null
+    make ${TESTS[$i]%.test}.output >/dev/null 2>/dev/null
     if [[ $? -ne 0 ]]
     then
         printf $FAILED
