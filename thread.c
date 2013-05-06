@@ -46,9 +46,11 @@ GList *threads = NULL;
 
 int nb_kernel_threads = 0;
 struct kernel_thread kernel_threads[MAX_KERNEL_THREADS];
+ucontext_t kernel_creator_context;
+int kernel_creator_stack_id;
 
 // Sleeping time in ms
-#define SLEEPING_TIME 1000
+#define SLEEPING_TIME 1
 
 struct kernel_thread * get_kernel_thread(){
     pthread_t my_thread = pthread_self();
@@ -74,19 +76,27 @@ void * kernel_thread(void * unused){
         if (n_thread == NULL){
             pthread_mutex_unlock(&kernel_mutex);
             //TODO it might be able to wake the thread with a signal
-            usleep(SLEEPING_TIME);
+            usleep(SLEEPING_TIME * 1000);
         }
         //if there's a next thread, set status of thread to active and
         else{
             n_thread->status = STATUS_ACTIVE;
-            pthread_mutex_unlock(&kernel_mutex);
+            pthread_mutex_unlock(&kernel_mutex);       
             swapcontext(&this->context, &n_thread->context);
         }
     }
 }
 
 void initialize_kernel_threads(){
-//TODO
+    int i;
+    for (i=0; i < MAX_KERNEL_THREADS; i++){
+        pthread_create(&kernel_threads[i].thread, NULL, kernel_thread, NULL);
+        nb_kernel_threads++;
+    }
+    for (i=0; i < MAX_KERNEL_THREADS; i++){
+        pthread_join(kernel_threads[i].thread, NULL);
+        nb_kernel_threads--;
+    }
 }
 
 /* L'identifiant du thread est mis à jour au fur et à mesure
@@ -114,6 +124,8 @@ struct thread * next_thread(){
   int next = current_thread;
   struct thread *next_running, *running;
   running = g_list_nth_data(threads, next);
+  if (running->status == STATUS_WAITING)
+      return running;
   next_running = g_list_nth_data(threads, ++next);
   if(next_running == NULL) {
     next = 0;
@@ -156,17 +168,17 @@ void initialize_thread_handler(){
   struct thread * this_thread = add_thread();
   this_thread->freeNeeded = false;
   atexit(end_thread_handling);
-  ucontext_t * new_context = &kernel_threads[0].context;
-  getcontext(new_context);
-  new_context->uc_stack.ss_size = STACK_SIZE;
-  new_context->uc_stack.ss_sp = malloc(new_context->uc_stack.ss_size);
-  new_thread->stack_id =
-    VALGRIND_STACK_REGISTER(new_context->uc_stack.ss_sp,
-        new_context->uc_stack.ss_sp
-        + new_context->uc_stack.ss_size);
-  new_context->uc_link = NULL;
-  makecontext(new_context, initialize_kernel_threads, 0);
-  swapcontext(&this_thread->context, new_context);
+  getcontext(&kernel_creator_context);
+  kernel_creator_context.uc_stack.ss_size = STACK_SIZE;
+  kernel_creator_context.uc_stack.ss_sp =
+      malloc(kernel_creator_context.uc_stack.ss_size);
+  kernel_creator_stack_id =
+    VALGRIND_STACK_REGISTER(kernel_creator_context.uc_stack.ss_sp,
+        kernel_creator_context.uc_stack.ss_sp
+        + kernel_creator_context.uc_stack.ss_size);
+  kernel_creator_context.uc_link = NULL;
+  makecontext(&kernel_creator_context, initialize_kernel_threads, 0);
+  swapcontext(&this_thread->context, &kernel_creator_context);
 }
 
 void free_thread(struct thread * t){
@@ -264,9 +276,9 @@ void thread_exit(void *retval){
   struct thread * my_thread = thread_self();
   my_thread->status = STATUS_TERMINATED;
   my_thread->retval = retval;
-  if (nb_threads == 1)
-    exit(EXIT_SUCCESS);
   struct thread * next = next_thread();
+  if (next == NULL)
+      exit(EXIT_SUCCESS);
   ucontext_t next_context = next->context;
   nb_threads--;
   nb_threads_waiting_join++;
