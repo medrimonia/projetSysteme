@@ -18,6 +18,7 @@
 static void * thfunc(void *_nb)
 {
   unsigned long nb = (unsigned long) _nb;
+  printf("th_func : %ld\n", nb);
   if ((unsigned long) nb > 0) {
     thread_t th;
     int err;
@@ -26,6 +27,8 @@ static void * thfunc(void *_nb)
     assert(!err);
     err = thread_join(th, &res);
     assert(!err);
+    printf("res : %p\n",res);
+    printf("expected : %p\n", _nb - 1);
     assert(res == _nb-1);
   }
   return _nb;

@@ -13,6 +13,7 @@
 #define STATUS_TERMINATED 1
 #define STATUS_WAITING 0
 #define STATUS_ACTIVE 2
+#define STATUS_JOINING 3
 
 void initialize_thread_handler();
 void end_thread_handling();
@@ -23,14 +24,15 @@ struct mutex{
 };
 
 struct thread{
-  ucontext_t context;
-  /* Stack_id is used in order to work properly with valgrind */
-  int stack_id;
-  /* Status is needed in order to allow join to work properly */
-  int status;
-  bool freeNeeded;
-  /* retval is used in join and allow to store the return value */
-  void * retval;
+    ucontext_t context;
+    /* Stack_id is used in order to work properly with valgrind */
+    int stack_id;
+    /* Status is needed in order to allow join to work properly */
+    int status;
+    struct thread * next;
+    bool freeNeeded;
+    /* retval is used in join and allow to store the return value */
+    void * retval;
 };
 
 struct kernel_thread{
@@ -50,30 +52,43 @@ ucontext_t kernel_creator_context;
 int kernel_creator_stack_id;
 
 // Sleeping time in ms
-#define SLEEPING_TIME 1
+#define SLEEPING_TIME 10000
 
-struct kernel_thread * get_kernel_thread(){
+int get_kernel_thread_id(){
     pthread_t my_thread = pthread_self();
+    printf("Trying to match %d\n", my_thread);
     int i;
     for (i = 0; i < nb_kernel_threads; i++){
+        printf("\t%d : %d\n",i, kernel_threads[i].thread);
         if (kernel_threads[i].thread == my_thread)
-            return &kernel_threads[i];
+            return i;
     }
-    return NULL;
+    return -1;
+}
+
+struct kernel_thread * get_kernel_thread(){
+    int i = get_kernel_thread_id();
+    if (i == -1)
+        return NULL;
+    return &kernel_threads[i];
 }
 
 pthread_mutex_t kernel_mutex;
 
 void * kernel_thread(void * unused){
     thread_t n_thread;
+    printf("k_t : lock\n");pthread_mutex_lock(&kernel_mutex);
     struct kernel_thread * this = get_kernel_thread();
+    printf("unlock\n");pthread_mutex_unlock(&kernel_mutex);
     while (true){
         // Next thread must be thread safe and remove the returned value of
         // the fifo
+        printf("ml : lock\n");
         pthread_mutex_lock(&kernel_mutex);
         n_thread = next_thread();
         // if there's no thread available, just sleep a while
         if (n_thread == NULL){
+            printf("unlock\n");
             pthread_mutex_unlock(&kernel_mutex);
             //TODO it might be able to wake the thread with a signal
             usleep(SLEEPING_TIME * 1000);
@@ -81,7 +96,9 @@ void * kernel_thread(void * unused){
         //if there's a next thread, set status of thread to active and
         else{
             n_thread->status = STATUS_ACTIVE;
-            pthread_mutex_unlock(&kernel_mutex);       
+            printf("unlock\n");pthread_mutex_unlock(&kernel_mutex);
+            printf("src : %p\n", &this->context);
+            printf("dst : %p\n", &n_thread->context);            
             swapcontext(&this->context, &n_thread->context);
         }
     }
@@ -89,10 +106,13 @@ void * kernel_thread(void * unused){
 
 void initialize_kernel_threads(){
     int i;
+    // threads shouldn't start before having been initialized
+    printf(" ikt : lock\n");pthread_mutex_lock(&kernel_mutex);
     for (i=0; i < MAX_KERNEL_THREADS; i++){
         pthread_create(&kernel_threads[i].thread, NULL, kernel_thread, NULL);
         nb_kernel_threads++;
     }
+    printf("unlock\n");pthread_mutex_unlock(&kernel_mutex);
     for (i=0; i < MAX_KERNEL_THREADS; i++){
         pthread_join(kernel_threads[i].thread, NULL);
         nb_kernel_threads--;
@@ -101,7 +121,7 @@ void initialize_kernel_threads(){
 
 /* L'identifiant du thread est mis à jour au fur et à mesure
 */
-int current_thread = 0;
+int current_thread[MAX_KERNEL_THREADS];
 int working_threads = 0;
 int nb_threads = 0;
 int nb_threads_waiting_join = 0;
@@ -113,6 +133,7 @@ struct thread * add_thread(){
   to_add->freeNeeded = true;
   to_add->retval = NULL;
   to_add->context.uc_link = NULL;
+  to_add->next = NULL;
   threads = g_list_append(threads, to_add);
   nb_threads++;
   next_thread_create++;
@@ -121,7 +142,8 @@ struct thread * add_thread(){
 
 // switch to next thread
 struct thread * next_thread(){
-  int next = current_thread;
+    int kernel_thread_id = get_kernel_thread_id();
+    int next = current_thread[kernel_thread_id];
   struct thread *next_running, *running;
   running = g_list_nth_data(threads, next);
   if (running->status == STATUS_WAITING)
@@ -133,7 +155,7 @@ struct thread * next_thread(){
   }
   while (running != next_running) {
     if(next_running->status == STATUS_WAITING) {
-      current_thread = g_list_index(threads, next_running);
+      current_thread[kernel_thread_id] = g_list_index(threads, next_running);
       return next_running;
     }
     next_running = g_list_nth_data(threads, ++next);
@@ -156,10 +178,12 @@ void wrapper(void *(*func)(void *), void * funcarg){
  * been initialized, it starts it and return a valid address
  */
 thread_t thread_self(){
+    int kernel_thread_id = get_kernel_thread_id();
   if (next_thread_create == 0){
     initialize_thread_handler();
   }
-  return (struct thread *) g_list_nth_data(threads, current_thread);
+  return (struct thread *) g_list_nth_data(threads,
+                                           current_thread[kernel_thread_id]);
 }
 
 /* Allocate memory and initialize everything needed for thread handling
@@ -192,13 +216,13 @@ void free_thread(struct thread * t){
 /* Free all the memory used for thread handling
 */
 void end_thread_handling(){
+    return;
   while (threads != NULL) {
     struct thread *t = g_list_first(threads)->data;
     threads = g_list_remove(threads, t);
     free_thread(t); 
   }
   nb_threads = 0;
-  current_thread = 0;
   threads = NULL;
   next_thread_create = 0;
 }
@@ -236,8 +260,15 @@ int thread_yield(){
   if (next_thread_create == 0){
     return 0;
   }
+  printf("yield : lock\n");
+  pthread_mutex_lock(&kernel_mutex);
   struct thread * my_thread = thread_self();
+  if (my_thread->status != STATUS_JOINING)
+      my_thread->status = STATUS_WAITING;
   struct thread * next = next_thread();
+  next->status = STATUS_ACTIVE;
+  printf("unlock\n");
+  pthread_mutex_unlock(&kernel_mutex);
   if (next != NULL && next != my_thread){
     swapcontext(&my_thread->context, &next->context);
   }
@@ -252,18 +283,26 @@ int thread_yield(){
  * call to thread_self() might not be valid anymore.
  */
 int thread_join(thread_t thread, void ** retval){
+    int kernel_thread_id = get_kernel_thread_id();
   struct thread * to_wait = (struct thread *) thread;
-  while(to_wait->status != STATUS_TERMINATED){
-    thread_yield();
-  }
+
+  printf("t_join : lock\n");pthread_mutex_lock(&kernel_mutex);
+  struct thread * this = thread_self();
+  this->status = STATUS_JOINING;
+  to_wait->next = this;
+  printf("unlock\n");pthread_mutex_unlock(&kernel_mutex);
+
+  thread_yield();
   nb_threads_waiting_join--;
 
+  printf("t_join : lock\n");pthread_mutex_lock(&kernel_mutex);
   if (retval != NULL)
     *retval = to_wait->retval;
-  if (g_list_index(threads, to_wait) < current_thread) {
-    current_thread--;
+  if (g_list_index(threads, to_wait) < current_thread[kernel_thread_id]) {
+    current_thread[kernel_thread_id]--;
   }
   threads = g_list_remove(threads, to_wait);
+  printf("unlock\n");pthread_mutex_unlock(&kernel_mutex);
   free_thread(to_wait);
   return 0;
 }
@@ -276,13 +315,21 @@ void thread_exit(void *retval){
   struct thread * my_thread = thread_self();
   my_thread->status = STATUS_TERMINATED;
   my_thread->retval = retval;
-  struct thread * next = next_thread();
-  if (next == NULL)
-      exit(EXIT_SUCCESS);
-  ucontext_t next_context = next->context;
+  struct thread * next;
+  if (my_thread->next != NULL){
+      next = my_thread->next;
+  }
+  else{
+      next = next_thread();
+      if (next == NULL)
+          exit(EXIT_SUCCESS);
+  }
   nb_threads--;
   nb_threads_waiting_join++;
-  setcontext(&next_context);
+  pthread_mutex_lock(&kernel_mutex);
+  next->status = STATUS_ACTIVE;
+  pthread_mutex_unlock(&kernel_mutex);
+  setcontext(&next->context);
   exit(EXIT_FAILURE);
 }
 
