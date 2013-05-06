@@ -1,6 +1,6 @@
 CFLAGS= -Wall -Wextra -Wno-unused-parameter -g -I.. `pkg-config --cflags --libs glib-2.0`
 
-LIBS=-lglib-2.0
+LIBS=-lglib-2.0 -lpthread
 
 SRC=$(wildcard *.c)
 
