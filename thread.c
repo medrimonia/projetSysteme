@@ -134,9 +134,11 @@ struct thread * add_thread(){
   to_add->retval = NULL;
   to_add->context.uc_link = NULL;
   to_add->next = NULL;
+  pthread_mutex_lock(&kernel_mutex);
   threads = g_list_append(threads, to_add);
   nb_threads++;
   next_thread_create++;
+  pthread_mutex_unlock(&kernel_mutex);
   return to_add;
 }
 
@@ -164,7 +166,7 @@ struct thread * next_thread(){
       next_running = g_list_nth_data(threads, next);
     }
   }
-  return NULL;
+  return running;
 }
 /* The wrapper function ensure that the return value will be saved
  * and that the thread will call thread_exit before dying
@@ -182,6 +184,8 @@ thread_t thread_self(){
   if (next_thread_create == 0){
     initialize_thread_handler();
   }
+  printf("list size : %d\n", g_list_length(threads));
+  printf("current thread : %d\n", current_thread[kernel_thread_id]);
   return (struct thread *) g_list_nth_data(threads,
                                            current_thread[kernel_thread_id]);
 }
@@ -292,6 +296,7 @@ int thread_join(thread_t thread, void ** retval){
   to_wait->next = this;
   printf("unlock\n");pthread_mutex_unlock(&kernel_mutex);
 
+
   thread_yield();
   nb_threads_waiting_join--;
 
@@ -312,24 +317,28 @@ int thread_join(thread_t thread, void ** retval){
  * This function doesn't free the resources used by the stack
  */
 void thread_exit(void *retval){
+  pthread_mutex_lock(&kernel_mutex);
   struct thread * my_thread = thread_self();
   my_thread->status = STATUS_TERMINATED;
   my_thread->retval = retval;
   struct thread * next;
   if (my_thread->next != NULL){
       next = my_thread->next;
+      int kernel_thread_id = get_kernel_thread_id();
+      current_thread[kernel_thread_id] = g_list_index(threads, next);
   }
   else{
       next = next_thread();
+      pthread_mutex_unlock(&kernel_mutex);
       if (next == NULL)
           exit(EXIT_SUCCESS);
   }
   nb_threads--;
   nb_threads_waiting_join++;
-  pthread_mutex_lock(&kernel_mutex);
   next->status = STATUS_ACTIVE;
   pthread_mutex_unlock(&kernel_mutex);
   setcontext(&next->context);
+  printf("Out of thread exit, unexpected exit!\n");
   exit(EXIT_FAILURE);
 }
 
