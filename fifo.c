@@ -1,13 +1,24 @@
 #include "fifo.h"
 
 #include <glib.h>
+#include <stdlib.h>
 
 
 struct fifo{
     GList *head;
     GList *tail;
-    int nb_elements
+    int nb_elements;
 };
+
+/* Initialize the fifo structure
+ */
+struct fifo *initialize_fifo() {
+    struct fifo *f = malloc(sizeof(struct fifo));
+    f->head = NULL;
+    f->tail = NULL;
+    f->nb_elements = 0;
+    return f;
+}
 
 /* Get the first element of the fifo and removes it
 */
@@ -18,6 +29,7 @@ thread_t dequeue(struct fifo *f) {
     else {
         thread_t ret = f->head->data;
         f->head = g_list_remove(f->head, ret);
+        f->nb_elements--;
         return ret;
     }
 }
@@ -39,8 +51,20 @@ void queue(struct fifo *f, thread_t t) {
         f->nb_elements++;
     } 
     else {
-        f->head = g_list_append(f->tail, t);
+        f->tail = g_list_append(f->tail, t);
         f->tail = f->tail->next;
         f->nb_elements++;
     }
+}
+
+/* Returns the fifo size
+ */
+int fifo_size(struct fifo* f) {
+    return f->nb_elements;
+}
+
+/* Frees the fifo
+ */
+void free_fifo(struct fifo *f) {
+    free(f);
 }

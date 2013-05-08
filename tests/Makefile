@@ -61,6 +61,9 @@ thread.o: ../thread.c
 fifo.o: ../fifo.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
+test_fifo: ../test_fifo.c fifo.o
+	$(CC) $(LDFLAGS) $^ -o $@ $(LIBS)	
+
 clean:
 	rm -rf *.o
 

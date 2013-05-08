@@ -2,3 +2,4 @@
 *.output
 *.valgrind
 *.error
+test_fifo
