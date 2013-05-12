@@ -54,4 +54,10 @@ void thread_mutex_unlock(mutex_p mutex);
 
 void thread_mutex_destroy(mutex_p mutex);
 
+int sched_start();
+
+void sig_block();
+
+void sig_unblock();
+
 #endif /* __THREAD_H__ */
