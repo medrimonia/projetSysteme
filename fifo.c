@@ -66,5 +66,9 @@ int fifo_size(struct fifo* f) {
 /* Frees the fifo
  */
 void free_fifo(struct fifo *f) {
+    if (f->head != NULL)
+        g_list_free(f->head);
+    if (f->tail != NULL)
+        g_list_free(f->tail);
     free(f);
 }
