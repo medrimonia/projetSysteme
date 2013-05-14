@@ -1,12 +1,14 @@
 #include "fifo.h"
 
-#include <glib.h>
 #include <stdlib.h>
 
+struct lnk{
+    struct lnk *next;
+    thread_t data;
+};
 
 struct fifo{
-    GList *head;
-    GList *tail;
+    struct lnk *head;
     int nb_elements;
 };
 
@@ -14,8 +16,7 @@ struct fifo{
  */
 struct fifo *initialize_fifo() {
     struct fifo *f = malloc(sizeof(struct fifo));
-    f->head = NULL;
-    f->tail = NULL;
+    f-> head = NULL;
     f->nb_elements = 0;
     return f;
 }
@@ -23,15 +24,13 @@ struct fifo *initialize_fifo() {
 /* Get the first element of the fifo and removes it
 */
 thread_t dequeue(struct fifo *f) {
-    if(f->head == NULL) {
+    if(f->nb_elements == 0)
         return NULL;
-    }
-    else {
-        thread_t ret = f->head->data;
-        f->head = g_list_remove(f->head, ret);
-        f->nb_elements--;
-        return ret;
-    }
+    thread_t ret = f->head->data;
+    struct lnk *to_free = f->head;
+    f->head = f->head->next;
+    free(to_free);
+    return ret;
 }
 
 /* Get the first element of the fifo without removing it
@@ -39,22 +38,17 @@ thread_t dequeue(struct fifo *f) {
  *  or NULL if empty
  */
 thread_t head(struct fifo *f) {
-    return ((f->head == NULL)?NULL:f->head->data);
+    return (f->head == NULL)?NULL:f->head;
 }
 
 /* Insert a thread at the end of the fifo
 */
 void queue(struct fifo *f, thread_t t) {
-    if(f->head == NULL){
-        f->head = g_list_append(f->head, t);
-        f->head->next = f->tail;
-        f->nb_elements++;
-    } 
-    else {
-        f->tail = g_list_append(f->tail, t);
-        f->tail = f->tail->next;
-        f->nb_elements++;
-    }
+    struct lnk *to_add = malloc(sizeof(struct lnk));
+    to_add->data = t;
+    to_add->next = f->head;
+    f->head = to_add;
+    f->nb_elements++;
 }
 
 /* Returns the fifo size
@@ -66,9 +60,10 @@ int fifo_size(struct fifo* f) {
 /* Frees the fifo
  */
 void free_fifo(struct fifo *f) {
-    if (f->head != NULL)
-        g_list_free(f->head);
-    if (f->tail != NULL)
-        g_list_free(f->tail);
+    while(f->head != NULL) {
+        struct lnk* to_free = f->head;
+        f->head = f->head->next;
+        free(to_free);
+    }
     free(f);
 }
