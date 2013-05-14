@@ -1,4 +1,4 @@
-#include "fifo.h"
+#include "lifo.h"
 
 #include <stdlib.h>
 
@@ -46,19 +46,25 @@ thread_t head(struct fifo *f) {
 void queue(struct fifo *f, thread_t t) {
     struct lnk *to_add = malloc(sizeof(struct lnk));
     to_add->data = t;
-    to_add->next = f->head;
-    f->head = to_add;
+    if(f->nb_elements == 0) {
+        to_add->next = NULL;
+        f->head = to_add;
+    }
+    else {
+        to_add->next = f->head->next;
+        f->head->next = to_add;
+    }
     f->nb_elements++;
 }
 
 /* Returns the fifo size
- */
+*/
 int fifo_size(struct fifo* f) {
     return f->nb_elements;
 }
 
 /* Frees the fifo
- */
+*/
 void free_fifo(struct fifo *f) {
     while(f->head != NULL) {
         struct lnk* to_free = f->head;

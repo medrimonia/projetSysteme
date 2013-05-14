@@ -58,10 +58,10 @@ tests: $(TESTS)
 thread.o: ../thread.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-fifo.o: ../fifo.c
+lifo.o: ../lifo.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-test_fifo: test_fifo.c fifo.o
+test_lifo: test_lifo.c lifo.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LIBS)	
 
 clean:
