@@ -105,11 +105,6 @@ void * kernel_thread(void * unused){
             n_thread->status = STATUS_ACTIVE;
             current_thread[kernel_id] = g_list_index(threads, n_thread);
             pthread_mutex_unlock(&kernel_mutex);
-            printf("this : %p\n", this);
-            printf("this...ss_sp : %p\n",
-                   this->context.uc_stack.ss_sp);
-            printf("n_thread...ss_sp : %p\n",
-                   n_thread->context.uc_stack.ss_sp);
             swapcontext(&this->context, &n_thread->context);
             pthread_mutex_lock(&kernel_mutex);
         }
@@ -199,8 +194,6 @@ thread_t thread_self(){
 void initialize_thread_handler(){
   struct thread * this_thread = add_thread();
   getcontext(&this_thread->context);
-  printf("appending first thread with ss_sp : %p\n",
-         this_thread->context.uc_stack.ss_sp);
   threads = g_list_append(threads, this_thread);
   this_thread->freeNeeded = false;
   atexit(end_thread_handling);
@@ -263,8 +256,6 @@ int thread_create(thread_t * newthread,
   makecontext(new_context, (void (*)(void)) wrapper, 2, func, funcarg);
   *newthread = (void *)new_thread;
   pthread_mutex_lock(&kernel_mutex);
-  printf("Appending a thread with ss_sp : %p\n",
-         new_thread->context.uc_stack.ss_sp);
   threads = g_list_append(threads, new_thread);
   pthread_mutex_unlock(&kernel_mutex);
   return 0;
