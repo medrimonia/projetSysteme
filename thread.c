@@ -7,19 +7,12 @@
 #include <valgrind/valgrind.h>
 #include <stdbool.h>
 #include <errno.h>
-#include <assert.h>
-
-#include <signal.h>
-#include <sys/time.h>
-#include <sys/types.h>
 
 #define STACK_SIZE 64 * 1024
 #define STATUS_TERMINATED 1
 
-
 void initialize_thread_handler();
 void end_thread_handling();
-
 
 struct mutex{
     pthread_mutex_t mutex;
@@ -38,8 +31,6 @@ struct thread{
 
 GList *threads = NULL;
 
-
-
 /* L'identifiant du thread est mis à jour au fur et à mesure
 */
 int current_thread = 0;
@@ -47,8 +38,6 @@ int working_threads = 0;
 int nb_threads = 0;
 int nb_threads_waiting_join = 0;
 int next_thread_create = 0;
-
-
 
 struct thread * add_thread(){
     struct thread *to_add = malloc(sizeof(struct thread));
@@ -156,7 +145,6 @@ int thread_create(thread_t * newthread,
     new_context->uc_link = NULL;
     makecontext(new_context, (void (*)(void)) wrapper, 2, func, funcarg);
     *newthread = (void *)new_thread;
-    thread_yield();
     return 0;
 }
 
@@ -164,15 +152,15 @@ int thread_create(thread_t * newthread,
  * one, otherwise it simply returns
  */
 int thread_yield(){
-  if (next_thread_create == 0){
+    if (next_thread_create == 0){
+        return 0;
+    }
+    struct thread * my_thread = thread_self();
+    struct thread * next = next_thread();
+    if (next != NULL && next != my_thread){
+        swapcontext(&my_thread->context, &next->context);
+    }
     return 0;
-  }
-  struct thread * my_thread = thread_self();
-  struct thread * next = next_thread();
-  if (next != NULL && next != my_thread){
-    swapcontext(&my_thread->context, &next->context);
-}
-  return 0;
 }
 
 /* Wait until a certain thread has finished it's job and put the value
@@ -193,11 +181,11 @@ int thread_join(thread_t thread, void ** retval){
         *retval = to_wait->retval;
     if (g_list_index(threads, to_wait) < current_thread) {
         current_thread--;
-	    
+
     }
     threads = g_list_remove(threads, to_wait);
     free_thread(to_wait);
-	
+
     return 0;
 }
 
@@ -248,54 +236,3 @@ void thread_mutex_destroy(mutex_p mutex){
     pthread_mutex_destroy(&mutex->mutex);
     free(mutex);
 }
-
- 
-
-
-/*
- * Preemption
- *
- 
-#define THREAD_SIGNAL_WHICH SIGVTALRM
-#define THREAD_TIMER_WHICH ITIMER_VIRTUAL
-#define TIMESLICE 10
-#define PREEMPTION_ON
-sigset_t preempt_set;
-
-
- * Active la préemption
- *
-void preemption_allow()
-{
-#ifdef PREEMPTION_ON
-    assert(sigprocmask(SIG_UNBLOCK, &preempt_set, NULL) == 0);
-#endif
-}
-
- * Désactive la préemption
- *
-void preemption_protect()
-{
-#ifdef PREEMPTION_ON
-    assert(sigprocmask(SIG_BLOCK, &preempt_set, NULL) == 0);
-#endif
-}
-
-int sched_start(){
-#ifdef PREEMPTION_ON
-  //Initialise le timer de préemption
-  struct itimerval timer;
-  timer.it_interval.tv_sec = 0;
-  timer.it_interval.tv_usec = TIMESLICE;
-  timer.it_value.tv_sec = 0;
-  timer.it_value.tv_usec = TIMESLICE;
-  if (setitimer(THREAD_TIMER_WHICH, &timer, NULL) == -1) {
-    return -1;
-  }
-#endif
-
-  preemption_allow();
-  
-  return 0;
-}
-*/
