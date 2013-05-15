@@ -4,55 +4,91 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{verbatim}
-\usepackage{amsmath}
-\usepackage{geometry}
+
+
 \usepackage{calc}
 \usepackage{color}
 
-%\date{}
-\author{Groupe :\\ \\Gardon Henri\\Ludovic Hofer\\Jérôme Lebot\\Pierre-Alain Pocquet\\Tony Sanchez}
-\title{Projet système \\ Rapport intermédiaire}
+\title{Projet système \\
+Mise en place d'une bibliothèque de threads}
+\author{Gardon Henri, Ludovic Hofer, Pierre-Alain Pocquet, Tony Sanchez}
 
 \begin{document}
 
 	\maketitle
-
-
+	\newpage
+	\tableofcontents
+	\newpage
 
 	\section{Introduction}
-
-		Au sein de ce projet nous nous attacherons à mettre en place une bibliothèque de gestion de threads. Cette dernière proposera une interface de programmation semblable à celle de pthread, à la différence près qu'un seul thread noyau sera utilisé.
+	
+	Au sein de ce projet nous nous attacherons à mettre en place une bibliothèque de gestion de threads. Cette dernière proposera une interface de programmation semblable à celle de pthread, à la différence près qu'un seul thread noyau sera utilisé.
 
 	\section{Structures de données}
 
-	\subsection{Représentation d'un thread}
+		\subsection{Représentation d'un thread}
+		Présentation de la structure d'un thread
+		
 
-	\subsection{Représentation des threads}
+		\subsection{Représentation des threads}
+		Pour pouvoir gérer un ensemble de thread il a fallu que nous mettions en place une structure permettant d'en contenir un certain nombre, qui sera manipulée par les primitives internes à la bibliothèque que nous nous attacherons à présenter dans la suite de ce rapport.
 
-	\subsubsection{Première version et utilisation d'un tableau}
+			\subsubsection{Première version et utilisation d'un tableau}
+			Dans en premier temps nous avons choisi d'utiliser un tableau pour représenter notre l'ensemble de thread que nous devions exécuter.
+			Si cette solution présente l'avantage d'être rapide à mettre au point et de pouvoir aboutir à un résultat fonctionnel, elle présente néanmoins certains inconvénients.
+			
+			Elle doit se limiter à un nombre de thread fixé par la bibliothèque, l'utilisateur peut donc potentiellement (et par exemple dans les cas de fonctions récursives se retrouver dans le cas où il dépasse cette limite.
+			
+			Cependant grâce à cette implementation nous avons tester très rapidement les problèmes d'algorithmique liés à la bibliothèque en se focalisant sur les fonctionnalités et non pas sur les spécificités d'implémentation.
 
-	\subsubsection{Amélioration et passage listes}
+			\subsubsection{Amélioration et passage listes}
+			Après avoir réussi à mettre au point une version primaire mais fonctionnel de notre bibliothèque, nous avons décider de la faire évoluer en changeant la représentations interne de l'ensemble de threads gérés.
+			L'avantage de cette version été qu'elle nous permettait de gérer un nombre de thread non plus limité en interne, mais par les limites physique de l'ordinateur sur lequel elle s'exécutait.
+			
+			Dans un but de simplicité nous avions choisi d'utiliser des GLists au sein de cette version. Bien que nous éloignant des soucis de mise au point d'une telle structure et nous permettant une mise au point rapide, l'utilisation d'une API externe implique quelques problèmes que nous n'avions pas pris en compte.
+			
+			En effet la gestion de la mémoire s'est révélé plus complexe que ce que nous pensions, et notre bibliothèque laissée une empreinte mémoire après exécution.
+			Rétrospectivement il aurait été plus intéressant d'utiliser une file pour gérer les différents threads. Ce dernier point sera abordé dans les améliorations possibles à la fin de ce rapport.
+			
 
 	\section{Fonctionnement de la bibliothèque}
+	Nous nous attacherons dans cette partie à expliquer le fonctionnement interne de notre bibliothèque, plus particulièrement de la version gérant les threads sous forme de liste.
 
-	\subsection{ajout d'un thread}
+		\subsection{ajout d'un thread}
 
-	\subsection{Recherche du prochain thread à exécuter}
+		\subsection{Recherche du prochain thread à exécuter}
 
-	\subsection{Spécificités d'implémentation}
+		\subsection{Spécificités d'implémentation}
+		
+			\subsubsection{gestion des threads retournants des valeurs}
+			description du wrapper
+			
+			\subsubsection{terminaison et libération de ressources}
+			ici parler des fonctions end thread handling etc...
+		
 
 	\section{ordonnancement}
+	Cette partie sera consacrée à expliquer plus finement comment l'ordonnacement des threads sera mise en place.
 
-	\subsection{Sans ordonnanceur}
+		\subsection{Sans ordonnanceur}
+		l'ordonnancement au sein des différentes méthodes à la manière de pthread.
 
-	\subsection{Version multi-coeur et changements}
+		\subsection{Version multi-coeur et changements}
+		%TODO coucou Ludovic
 
 	\section{Tests et performance}
+	parler des tests qui fonctionne et insérer images des performances %TODO coucu Ludovic
 
 	\section{Ce qui est fait}
+	Version de base fonctionnel et fiable, passage sous liste et multi-coeur
 
 	\section{Perspective}
+	Passage sous file --> insertion et choix prochain thread plus rapide.
+	Priorités
 
 	\section{Conclusion}
+	applications de compétences théoriques sur un cas concret.
+	
+	Réalisation de la complexité de l'ordonnancement
 
 \end{document}
