@@ -7,7 +7,7 @@ PASSED="[\e[1;32mPASSED\e[0m]"
 printf "\033[25C\033[1m COMPILING \033[0m\n"
 
 cd tests
-make mrproper
+make mrproper >/dev/null
 make tests -i >/dev/null 2>/dev/null
 
 NB_TESTS=$(ls *.c | wc -w)

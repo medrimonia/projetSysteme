@@ -43,7 +43,7 @@ struct kernel_thread{
     int stack_id;
 };
 
-#define MAX_KERNEL_THREADS 4
+#define MAX_KERNEL_THREADS 8
 
 /* L'identifiant du thread est mis à jour au fur et à mesure
 */
@@ -103,23 +103,30 @@ void * kernel_thread(void * unused){
         //if there's a next thread, set status of thread to active and
         else{
             n_thread->status = STATUS_ACTIVE;
+            current_thread[kernel_id] = g_list_index(threads, n_thread);
             pthread_mutex_unlock(&kernel_mutex);
+            printf("this : %p\n", this);
+            printf("this...ss_sp : %p\n",
+                   this->context.uc_stack.ss_sp);
+            printf("n_thread...ss_sp : %p\n",
+                   n_thread->context.uc_stack.ss_sp);
             swapcontext(&this->context, &n_thread->context);
             pthread_mutex_lock(&kernel_mutex);
-            if (n_thread->status != STATUS_JOINING &&
-                n_thread->status != STATUS_TERMINATED)
-                n_thread->status = STATUS_WAITING;
         }
     }
 }
 
 void initialize_kernel_threads(){
     int i;
+    // Wait until we release the kraken
+    pthread_mutex_lock(&kernel_mutex);
     // threads shouldn't start before having been initialized
     for (i=0; i < MAX_KERNEL_THREADS; i++){
         pthread_create(&kernel_threads[i].thread, NULL, kernel_thread, NULL);
         nb_kernel_threads++;
+        current_thread[i] = 0;
     }
+    pthread_mutex_unlock(&kernel_mutex);
     for (i=0; i < MAX_KERNEL_THREADS; i++){
         pthread_join(kernel_threads[i].thread, NULL);
         nb_kernel_threads--;
@@ -134,7 +141,6 @@ struct thread * add_thread(){
   to_add->context.uc_link = NULL;
   to_add->next = NULL;
   pthread_mutex_lock(&kernel_mutex);
-  threads = g_list_append(threads, to_add);
   nb_threads++;
   next_thread_create++;
   pthread_mutex_unlock(&kernel_mutex);
@@ -143,29 +149,30 @@ struct thread * add_thread(){
 
 // switch to next thread
 struct thread * next_thread(){
+    struct thread *next_running, *running;
     int kernel_thread_id = get_kernel_thread_id();
     int next = current_thread[kernel_thread_id];
-  struct thread *next_running, *running;
-  running = g_list_nth_data(threads, next);
-  if (running->status == STATUS_WAITING)
-      return running;
-  next_running = g_list_nth_data(threads, ++next);
-  if(next_running == NULL) {
-    next = 0;
-    next_running = g_list_nth_data(threads, next);
-  }
-  while (running != next_running) {
-    if(next_running->status == STATUS_WAITING) {
-      current_thread[kernel_thread_id] = g_list_index(threads, next_running);
-      return next_running;
-    }
+    running = g_list_nth_data(threads, next);
+    if (running != NULL && running->status == STATUS_WAITING)
+        return running;
     next_running = g_list_nth_data(threads, ++next);
-    if (next_running == NULL) {
-      next = 0;
-      next_running = g_list_nth_data(threads, next);
+    if(next_running == NULL) {
+        next = 0;
+        next_running = g_list_nth_data(threads, next);
     }
-  }
-  return NULL;
+    while (running != next_running) {
+        if(next_running->status == STATUS_WAITING) {
+            current_thread[kernel_thread_id] = g_list_index(threads,
+                                                            next_running);
+            return next_running;
+        }
+        next_running = g_list_nth_data(threads, ++next);
+        if (next_running == NULL) {
+            next = 0;
+            next_running = g_list_nth_data(threads, next);
+        }
+    }
+    return NULL;
 }
 /* The wrapper function ensure that the return value will be saved
  * and that the thread will call thread_exit before dying
@@ -191,6 +198,10 @@ thread_t thread_self(){
  */
 void initialize_thread_handler(){
   struct thread * this_thread = add_thread();
+  getcontext(&this_thread->context);
+  printf("appending first thread with ss_sp : %p\n",
+         this_thread->context.uc_stack.ss_sp);
+  threads = g_list_append(threads, this_thread);
   this_thread->freeNeeded = false;
   atexit(end_thread_handling);
   getcontext(&kernel_creator_context);
@@ -234,8 +245,8 @@ void end_thread_handling(){
  * arguments specified.
  */
 int thread_create(thread_t * newthread,
-    void *(*func)(void *),
-    void * funcarg){
+                  void *(*func)(void *),
+                  void * funcarg){
   if (next_thread_create == 0){
     initialize_thread_handler();
   }
@@ -251,6 +262,11 @@ int thread_create(thread_t * newthread,
   new_context->uc_link = NULL;
   makecontext(new_context, (void (*)(void)) wrapper, 2, func, funcarg);
   *newthread = (void *)new_thread;
+  pthread_mutex_lock(&kernel_mutex);
+  printf("Appending a thread with ss_sp : %p\n",
+         new_thread->context.uc_stack.ss_sp);
+  threads = g_list_append(threads, new_thread);
+  pthread_mutex_unlock(&kernel_mutex);
   return 0;
 }
 
@@ -263,6 +279,8 @@ int thread_yield(){
   }
   pthread_mutex_lock(&kernel_mutex);
   struct thread * my_thread = thread_self();
+  if (my_thread->status != STATUS_JOINING)
+      my_thread->status = STATUS_WAITING;
   pthread_mutex_unlock(&kernel_mutex);
   struct kernel_thread * dst = get_kernel_thread();
   swapcontext(&my_thread->context, &dst->context);
@@ -299,9 +317,16 @@ int thread_join(thread_t thread, void ** retval){
 
   if (retval != NULL)
     *retval = to_wait->retval;
-  if (g_list_index(threads, to_wait) < current_thread[kernel_thread_id]) {
-    current_thread[kernel_thread_id]--;
+  pthread_mutex_lock(&kernel_mutex);
+  int i;
+  for (i = 0; i < MAX_KERNEL_THREADS; i++){
+      if (g_list_index(threads, to_wait) < current_thread[i]) {
+          current_thread[i]--;
+          if (current_thread[i] < 0)
+              current_thread[i] = 0;
+      }
   }
+  pthread_mutex_unlock(&kernel_mutex);
   threads = g_list_remove(threads, to_wait);
   free_thread(to_wait);
   return 0;
