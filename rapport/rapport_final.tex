@@ -1,0 +1,139 @@
+\documentclass{article}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{calc}
+\usepackage{color}
+
+%\date{}
+\author{Groupe :\\ \\Gardon Henri\\Ludovic Hofer\\Jérôme Lebot\\Pierre-Alain Pocquet\\Tony Sanchez}
+\title{Projet système \\ Rapport intermédiaire}
+
+\begin{document}
+
+\maketitle
+
+\newpage
+
+\section{Représentation des threads}
+
+\subsection{Structure de données}
+
+L'identification et la gestion des threads manipulés par l'ordonnanceur reposent sur
+la structure thread, dont les champs sont décrits comme suit :
+
+    \noindent\parindent11.10839pt\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{
+       
+       \textcolor{blue}{struct} thread\{ \\
+    	\indent	\textcolor{blue}{ucontext\_t} context;\\
+    	\indent	\textcolor{blue}{int} stack\_id;\\
+    	\indent	\textcolor{blue}{int} status;\\
+    	\indent	\textcolor{blue}{bool} freeNeeded;\\
+    	\indent	\textcolor{blue}{void} * retval;\\
+		\};
+	
+	}}
+\\
+\begin{itemize}
+    \item context : conserve le status associé à ce thread.
+    \item stack\_id : ce champ permet de renseigner Valgrind sur l'identifiant de la pile où le thread est stocké. 
+    \item status : il s'agit du status du thread. Il existe deux cas :
+    \begin{description}
+        \item[STATUS\_TERMINATED]le thread a terminé son exécution, sa valeur de retour se trouve dans \textit{retval}
+    \end{description}
+    Les autres status du thread n'interviennent pas.
+    \item freeNeeded : ce champ indique si le thread est libéré.****A PRECISER****
+    \item retval : est la valeur de retour dans le cas où le thread aurait fini son exécution (status TERMINATED cf \textit{status}), NULL sinon.
+\end{itemize}
+
+\noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{
+    
+    \textcolor{blue}{struct} mutex\{  \\
+    \textcolor{blue}{pthread\_mutex\_t} mutex; \\
+    \};
+
+}}
+
+
+\subsection{Variables globales}
+
+Afin de simplifier l'implémentation des fonctions, les variables globales définies ci-dessous ont été mises en places.
+
+\begin{itemize}
+
+    \item GList * threads : ****A COMPLETER****\\
+
+    \item sigset\_t preempt\_set; ****A COMPLETER****\\
+
+    \item int current\_thread cet entier indique l'identifiant du thread en cours d'exécution\\
+
+    \item int working\_threads cet entier indique le nombre de threads dont l'exécution n'est pas terminée.\\
+
+    \item int nb\_threads cet entier indique le nombre de threads existants. \\
+
+    \item int nb\_threads\_waiting\_join : cet entier indique le nombre de thread attendant la fin de leur exécution.\\
+
+    \item int next\_thread\_create : cet entier indique l'identifiant à donner au prochain thread à créer.
+
+\end{itemize}
+
+\subsection{Fonctions intermédiaires}
+
+    \subsubsection{add\_thread()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{struct} thread * add\_thread();}}   
+
+ \subsubsection{next\_thread()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{struct} thread * next\_thread();}}  
+
+\subsubsection{wrapper()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{void} wrapper(\textcolor{blue}{void} *(*func)(\textcolor{blue}{void}*), \textcolor{blue}{void} * funcarg)); }}  
+
+\subsubsection{thread\_self()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{thread\_t} thread\_self();}}
+
+\subsubsection{initialize\_thread\_handler()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{void} initialize\_thread\_handler();}}
+
+\subsubsection{free\_thread()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{void} free\_thread(\textcolor{blue}{struct} thread * t);}}
+
+\subsubsection{end\_thread\_handling()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{void} end\_thread\_handling();}}
+
+\subsubsection{thread\_mutex\_init()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{mutex\_p} thread\_mutex\_init();}}
+
+\subsubsection{thread\_mutex\_lock()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{void} thread\_mutex\_lock(\textcolor{blue}{mutex\_p} mutex);}}
+
+\subsubsection{thread\_mutex\_unlock()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{void} thread\_mutex\_unlock(\textcolor{blue}{mutex\_p} mutex);}}
+
+\subsubsection{thread\_mutex\_destroy()}
+
+        \noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{\textcolor{blue}{void} thread\_mutex\_destroy(textcolor{blue}{mutex\_p} mutex);}}
+
+
+
+\section{Choix d'implémentation des fonctions}
+
+\subsection{thread\_create()}
+    
+
+
+\end{document}
+%\noindent\fbox{\parbox{\linewidth-2\fboxrule-2\fboxsep}{}}
