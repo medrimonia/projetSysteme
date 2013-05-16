@@ -126,8 +126,16 @@
 		appel à la fonction \verb!thread_create()!, fonction à laquelle il
 		passera en paramètre un pointeur sur une structure de thread qui 
 		contiendra l'adresse du thread ajouté et la fonction qu'il doit
-		exécuter.
+		exécuter.\\
 		
+		Via une fonction auxiliaire : \verb!add_thread()! nous récupérons
+		l'adresse d'une structure de thread fraichement allouée et dont les
+		principaux champs ont été initialisé. Il ne reste plus au sein de 
+		\verb!thread_create()! qu'à allouer le contexte du thread et à y lier
+		la fonction passée en paramètre.\\
+		
+		Le thread est ensuite ajouté à la liste au sein d'une section critique
+		pour éviter les accès concurrents.
 
 		\subsection{Recherche du prochain thread à exécuter}
 
