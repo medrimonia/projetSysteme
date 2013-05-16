@@ -10,7 +10,7 @@ cd tests
 make mrproper >/dev/null
 make tests -i >/dev/null 2>/dev/null
 
-NB_TESTS=$(ls *.c | wc -w)
+NB_TESTS=$(ls *.c | grep "^[0-9].*" | wc -w)
 NB_TESTS_COMPILED=$(ls *.test | wc -w)
 
 TESTS=(*.test)

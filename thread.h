@@ -54,4 +54,5 @@ void thread_mutex_unlock(mutex_p mutex);
 
 void thread_mutex_destroy(mutex_p mutex);
 
+
 #endif /* __THREAD_H__ */

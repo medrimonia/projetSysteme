@@ -1,6 +1,6 @@
 CFLAGS= -Wall -Wextra -Wno-unused-parameter -g -I.. `pkg-config --cflags --libs glib-2.0`
 
-LIBS=-lglib-2.0
+LIBS=-lglib-2.0 -lpthread
 
 SRC=$(wildcard *.c)
 
@@ -57,6 +57,12 @@ tests: $(TESTS)
 
 thread.o: ../thread.c
 	$(CC) -c $(CFLAGS) $< -o $@
+
+lifo.o: ../lifo.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+test_lifo: test_lifo.c lifo.o
+	$(CC) $(LDFLAGS) $^ -o $@ $(LIBS)	
 
 clean:
 	rm -rf *.o
