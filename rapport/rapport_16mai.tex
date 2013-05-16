@@ -135,7 +135,9 @@
             seulement une fois qu'un thread a récupéré sa valeur. Afin de
             diminuer l'empreinte mémoire, il aurait été mieux de libérer
             la mémoire de la pile dès qu'un thread se termine, évitant ainsi
-            qu'un groupe de threads morts monopolisent une grande partie de
+            qu'un groupe de threads morts monopolisent u
+		l'ordonnancement au sein des différentes méthodes à la manière
+        de pthread.ne grande partie de
             la mémoire inutilement.
             \paragraph{}
             Certaines des ressources devant être libérées uniquement lorsque
@@ -147,12 +149,17 @@
 		
 
 	\section{Ordonnancement}
-	Cette partie sera consacrée à expliquer plus finement comment
-    l'ordonnacement des threads sera mise en place.
+    Au cours du projet, nous avons utilisé deux types d'ordonnancement, un
+    avec le support multi-coeur et un autre sans support de multi-coeur. Au
+    cours du projet, nous avons aussi utilisé une astuce qui nous a été
+    donnée afin que lorsqu'un thread fait un \verb!join! sur un autre
+    thread, il soit exécuté dès que celui qu'il attend se termine.
 
 		\subsection{Sans ordonnanceur}
-		l'ordonnancement au sein des différentes méthodes à la manière
-        de pthread.
+        Lorsque les machines multi-processeurs n'étaient pas prise en compte,
+        nous avions penché pour une implémentation sans contexte
+        d'ordonnancement, chaque thread passant directement la main au
+        suivant à l'aide d'un swapcontext.
 
 		\subsection{Version multi-coeur et changements}
 		Parmi les objectifs à remplir, il nous avait été proposé de prendre
