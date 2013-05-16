@@ -26,7 +26,8 @@ set tics out
 set terminal png size 1024,768
 set output "${OUTPUT}.png"
 
-plot '${INPUT}' using 1:2 with lines lw 2 title "real time",\
-     '${INPUT}' using 1:3 with lines lw 2 title "user time"
+plot '${INPUT}' using 1:2 with lines lw 2 title "no thread time",\
+     '${INPUT}' using 1:3 with lines lw 2 title "pthread time",\
+     '${INPUT}' using 1:4 with lines lw 2 title "custom thread time"
 quit
 PLOT
