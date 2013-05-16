@@ -243,13 +243,26 @@
 
 
 
-	\section{Ce qui est fait}
+	\section{Résultats}
 	Version de base fonctionnel et fiable, passage sous liste et
     multi-coeur
 
-	\section{Perspective}
-	Passage sous file --> insertion et choix prochain thread plus
-    rapide.  Priorités
+	\section{Perspectives}
+    Tel qu'il est présenté, le projet pourrait difficilement être repris
+    afin d'y ajouter d'autres fonctionnalités, idéalement, le code devrait
+    être repris de zéro afin d'être plus clair. Il devrait être modularisé et
+    bien plus commenté, avant tout au niveau du comportement des différentes
+    fonctions.
+    \paragraph{}
+    Au niveau des performances, utiliser des files permettrait une insertion
+    et un choix du prochain thread plus rapide. Une autre des priorités
+    serait d'intégrer la préemption afin de ne plus se reposer sur un
+    comportement coopératif. Il serait aussi intéressant que la bibliothèque
+    dispose de ses propres mutex. Il faudrait aussi pouvoir permettre à des
+    threads d'envoyer des signaux à d'autres, d'annuler d'autres threads ou
+    encore de détecter les débordements de pile. Finalement, il serait
+    intéressant de proposer des priorités aux threads ainsi que des moyens
+    de choisir entre différentes politiques d'ordonnancement.
 
 	\section{Conclusion}
     Ce projet nous a énormément appris sur les difficultés rencontrées lors
