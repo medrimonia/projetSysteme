@@ -144,7 +144,27 @@
 		\subsection{Spécificités d'implémentation}
 		
 			\subsubsection{gestion des threads retournants des valeurs}
-			description du wrapper
+			Afin d'être sûr que même dans le cas ou l'utilisateur ajoute un
+			thread qui exécute une fonction qui renvoient une valeur nous
+			puissions permettre sa récupération par un join, nous avons 
+			utilisé un conteneur pour cette dernière.\\
+			Lors de l'ajout d'un thread ce n'est donc pas directement la
+			fonction que l'on nous donne que nous lions au contexte
+			d'exécution mais la suivante :
+			\begin{verbatim}
+			/* The wrapper function ensure that the return value will be saved                                                                                     
+ * and that the thread will call thread_exit before dying
+ */
+void wrapper(void *(*func)(void *), void * funcarg){
+    void * retval = func(funcarg);
+    thread_exit(retval);
+}	
+			\end{verbatim} \\
+			
+			Cela nous assure de récupérer la valeur de retour puisque nous 
+			forçons l'appel à \verb!thread_exit()! dont le but est justement
+			de mettre la bonne valeur de retour dans \verb!retval!, de changer
+			le statut du thread et de passer au suivant.
 			
 			\subsubsection{terminaison et libération de ressources}
 			ici parler des fonctions end thread handling etc...
@@ -289,6 +309,21 @@
     encore de détecter les débordements de pile. Finalement, il serait
     intéressant de proposer des priorités aux threads ainsi que des moyens
     de choisir entre différentes politiques d'ordonnancement.
+    
+    \subsection{Préemption}
+    La préemption était l'un des objectifs avancés du code utilisateur.
+Nous avons essayé de la réaliser à l'aide d'un timer à l'aide des fonctions \textit{setitimer}) et \textit{getitimer}. Notre timer virtuel est créé afin d'envoyer, tous les \textit{timeslices} secondes, un signal \textit{ITIMER\_VIRTUAL} à l'application. Il décroit lors de l'exécution du processus.
+ A la réception de ce signal de préemption, notre bibliothèque de thread devrait reprend la main sur le code exécuté et effectue un appel à \textit{thread\_yield} pour changer de contexte.\\
+Le timer est créé à la création du premier thread du programme et est détruit à la disparition de ce thread
+\\
+Il est réinitialisé dans \verb$thread_yield$, \verb$thread_join$ et
+\verb$thread_exit$, pour que le thread qui reprend la main ait lui aussi le temps d'exécution disponible \verb$TIMESLICE$. 
+
+Dans un premier temps, nous avions pensé donné à la variable \verb$TIMESLICE$ une valeur fixée, mais ensuite nous avions envisager de donner à cette varaiable une valeur fonction de la priorité du thread en question.
+\\
+La préemption introduit malheureusement de nouveaux problèmes. Si un changement de contexte se produit au moment où la bibliothèque est en train de modifier son état interne dans une des fonctions de l'API peut (et c'est souvent le cas) engendrer un état incohérent. Ce phénomène étant difficile à prévoir du fait de son caractère non déterminisme de préemption. La seule solution est de désactiver temporairement la préemption durant l'exécution du code des fonctions critiques de l'API. Ceci est réalisé à l'aide de la fonction \textit{sigprocmask()} qui permet de préciser les signaux bloqués et dont le traitement est reporté après leur réactivation. Nous avions utilisé en interne les deux fonctions \textit{preemption\_allow()} et \textit{preemption\_protect()} pour nous protéger de ces erreurs.\\
+
+Cependant les tests effectués sur la préemption n'ont pas été concluant. Nous avons eu des difficultés pour obtenir l'état du timer et pour propager le signal \textit{ITIMER\_VIRTUAL} à l'application. Nous avons ainsi préferer enlever ce qui avait été mis en place par souci de clarté, tout en laissant nos deux fonctions internes \textit{preemption\_allow()} et \textit{preemption\_protect()}
 
 	\section{Conclusion}
     Ce projet nous a énormément appris sur les difficultés rencontrées lors
