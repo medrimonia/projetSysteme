@@ -48,10 +48,15 @@
 		Les différents champs de la structure ont les utilités 
 		suivantes :
 		\begin{itemize}
-			\item \verb!context! :
-			\item \verb!stack_id! :
-			\item \verb!status! :
-			\item \verb!next! : %TODO attribut toujours utile
+			\item \verb!context! : cet attribut contient le contexte
+			d'exécution du thread. En particulier la pile qui lui est
+			associé et la fonction qu'il exécute.
+			\item \verb!stack_id! : cet attribut est nécessaire pour
+			pouvoir utiliser valgrind sur notre bibliothèque.
+			\item \verb!status! : le statut actuel du thread, il peut
+			être : \verb!STATUS_RUNNING! lorsque le thread est en 
+			exécution, \verb!STATUS_JOINING! quand un join a 
+			\item \verb!next! : %TODO attribut toujours utile ?
 			
 		\end{itemize}		
 		
