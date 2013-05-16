@@ -1,10 +1,13 @@
 \documentclass{article}
 
-\usepackage[french]{babel} \usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc} \usepackage{verbatim}
-
-
-\usepackage{calc} \usepackage{color}
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{calc}
+\usepackage{color}
+\usepackage{float}
 
 \title{Projet système \\ Mise en place d'une bibliothèque de threads}
 \author{Gardon Henri, Ludovic Hofer, Pierre-Alain Pocquet, Tony
@@ -109,11 +112,105 @@
         de pthread.
 
 		\subsection{Version multi-coeur et changements}
-		%TODO coucou Ludovic
+		Parmi les objectifs à remplir, il nous avait été proposé de prendre
+        en charge les architectures multi-coeurs en utilisant plusieurs
+        threads noyaux. Deux possibilités nous avaient été proposées :
+        \begin{itemize}
+          \item Utiliser la fonction \verb!clone!
+          \item Utiliser \verb!pthread! pour créer les threads noyaux.
+        \end{itemize}
+        Un collègue nous ayant hautement déconseillé d'utiliser la fonction
+        \verb!clone! en raison des problèmes engendrés lorsque des fonctions
+        de la librairie standard \verb!c! sont utilisées, nous avons préféré
+        nous baser sur la librairie \verb!pthread!.
+        \paragraph{}
+        Afin de faire fonctionner ces threads noyaux, il était inévitable
+        d'utiliser des mutex\footnote{Entre autre pour éviter que deux
+          threads noyaux sélectionnent le même thread utilisateur.}, nous
+        avons donc utilisés ceux de la librairie \verb!pthread!. 
+        \paragraph{}
+        Afin de faciliter le passage au multi-coeur, nous avons choisi
+        de revenir aux threads noyaux entre deux exécutions de threads, ce
+        qui permettait plus facilement de récupérer le prochain thread. Notre
+        implémentation du pool de thread sous forme de liste a compliqué les
+        choses pour ce passage étant donné que lorsqu'un élément est retiré
+        de la liste de thread (après un \verb!thread_join!), il faut mettre
+        à jour tous les éléments dont l'indice était supérieur à celui de
+        l'élément retiré.
+        \paragraph{}
+        Afin de pouvoir essayer différents nombre de threads noyaux, nous
+        avons défini une macro dans \verb!thread.c! définissant le nombre
+        de ces threads. Il est d'ailleurs à noter que lorsque moins de
+        threads utilisateurs sont actifs que de threads noyaux, nous
+        n'évitons pas le fait d'avoir de l'attente active\footnote{Nous avons
+          placé un \verb!sleep! sur un temps court afin de ne pas consommer
+          trop de CPU à ne rien faire tout en évitant d'avoir un temps de
+          réaction trop élevé.}.
+        \paragraph{}
+        Il est aussi à noter qu'avec le déploiement de cette fonctionnalité,
+        nous avons eu de nouveaux bugs que nous n'avons pas tous réussi à
+        éliminer, cependant ceux-ci ne se produisant que rarement et de façon
+        aléatoire, nous n'avons pas réussi à les résoudre dans le temps
+        imparti.
 
 	\section{Tests et performance}
-	parler des tests qui fonctionne et insérer images des performances
-    %TODO coucu Ludovic
+    Afin de pouvoir valider l'évolution du code, nous avons mis en place un
+    système de validation se basant principalement sur le code fourni.
+    Celui-ci permettait initialement de valider non seulement la bonne
+    exécution des programmes, mais aussi l'absence de problèmes signalés par
+    \verb!valgrind!. Cependant, à cause des problèmes de fuite mémoire lors
+    de l'utilisation des {\em GList}, cette partie du test est rapidement
+    devenue inutiles, tous les programmes de test échouant.
+    \begin{figure}[H]
+      \caption{Exemple d'exécution du module de test}
+      \centering
+      \includegraphics [width=\textwidth]{tests.png}
+    \end{figure}
+    \paragraph{}
+    Ces tests nous ont permis de nous rendre compte de bugs dans des tests
+    où nous ne les attendions pas lors de certaines modifications et leur
+    diversité a aussi permis de couvrir des situations auxquels nous
+    n'aurions pas forcément pensé.
+    \paragraph{}
+    Au niveau des performances, nous sommes conscients qu'il y a de
+    nombreux problèmes qui nuisent à la performance, entre autre le fait que
+    nous ayons une seule liste pour les threads, quelque soit leur statut. Il
+    est facile d'imaginer une situation ou de très nombreux threads sont dans
+    un statut \verb!TERMINATED!, attendant que quelqu'un vienne récupérer
+    la valeur de retour, dans ce cas, \verb!next_thread! peut très bien
+    demander de faire un nombre de tour de boucle dépendant du nombre de
+    threads alors que si ces listes étaient distinguées, l'accès serait en
+    temps constant.
+    \paragraph{}
+    Afin de comparer les performances de notre implémentation avec celle de
+    pthread lors de l'utilisation de plusieurs coeurs, nous avons lancé
+    exactement le même programme\footnote{Une simple boucle incrémentant une
+      valeur} dans trois configurations différentes.
+    \begin{itemize}
+      \item Sans aucun thread, en séquentiel pur
+      \item En utilisant uniquement pthread
+      \item En utilisant notre implémentation de thread
+    \end{itemize}
+    \paragraph{}
+    Dans les deux derniers cas, le nombre de thread était variable. Ce test
+    s'est effectué sur {\em trelawney}\footnote{Une machine du {\em CREMI}}
+    qui apparemment possède en tout cas 8 coeurs. Comme les temps
+    d'exécutions variaient légèrement, le même procédé a été appliqué dans
+    les deux cas, sur 5 exécutions, le temps minimal était conservé.
+    \begin{figure}[H]
+      \caption{Mesure de la performance en multi-coeur}
+      \includegraphics[width=\textwidth]{compare.png}
+    \end{figure}
+    \paragraph{}
+    Nous avons pu vérifier que nous obtenions bien un gain de performance
+    avec les threads noyaux, ce qui est normal étant donné que dans notre
+    cas, nous nous sommes appuyé sur pthread pour créer les threads noyaux et
+    que les threads utilisateurs n'ont donc pas de raison de redonner la main
+    à des threads noyaux.
+    % TODO éventuellement test comparant un grand nombre de thread sur le 
+    % même coeur
+
+
 
 	\section{Ce qui est fait}
 	Version de base fonctionnel et fiable, passage sous liste et
