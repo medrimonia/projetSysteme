@@ -221,8 +221,28 @@
     rapide.  Priorités
 
 	\section{Conclusion}
-	applications de compétences théoriques sur un cas concret.
-	
-	Réalisation de la complexité de l'ordonnancement
+    Ce projet nous a énormément appris sur les difficultés rencontrées lors
+    de l'implémentation. Il nous a permis d'appliquer nos connaissance
+    théoriques acquises lors des cours de programmation système et de système
+    d'exploitation pour essayer de mettre en place une bibliothèque
+    s'inspirant de celle dont nous avons pris l'habitude de nous servir.
+    \paragraph{}
+    Au vu de notre expérience, il nous paraît primordial d'avoir un module
+    d'ordonnancement fournissant une interface claire afin de pouvoir
+    implémenter les threads plus facilement. Effectivement, un grand nombre
+    de nos problèmes de débugages provenaient du fait que les différents
+    aspects n'étaient pas assez séparés et qu'il n'était pas clair de savoir
+    quel comportement l'on attendait exactement d'une fonction. La gestion
+    de la programmation multi-coeur aurait pu être grandement simplifiée si
+    nous avions déjà disposé d'une fonction \verb!get_next_thread!
+    permettant de récupérer le prochain thread sans avoir à se soucier des
+    accès concurrents. La gestion de ceux-ci dans notre programme
+    manquant encore de de clarté à la fin du projet.
+    \paragraph{}
+    Nous avons aussi pu constater que si une version minimaliste d'un
+    gestionnaire de thread est relativement facile à implémenter, toutes les
+    garanties qu'offre une librairie tel que {\em pthread} représentent un
+    travail énorme, demandant une connaissance approfondie aussi bien du
+    fonctionnement du système d'exploitation que des structures de données.
 
 \end{document}
