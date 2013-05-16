@@ -2,4 +2,5 @@
 *.output
 *.valgrind
 *.error
-test_fifo
+test_lifo
+parallel-speed-compare
