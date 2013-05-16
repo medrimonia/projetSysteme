@@ -30,7 +30,30 @@
 	\section{Structures de données}
 
 		\subsection{Représentation d'un thread}
-		Présentation de la structure d'un thread
+		Au sein de notre bibliothèque de thread, nous avons choisi de les
+		représenter en utilisant la structure suivante : \\
+		\begin{verbatim}
+		struct thread{
+    ucontext_t context;
+    /* Stack_id is used in order to work properly with valgrind */
+    int stack_id;
+    /* Status is needed in order to allow join to work properly */
+    int status;
+    struct thread * next;
+    bool freeNeeded;
+    /* retval is used in join and allow to store the return value */
+    void * retval;
+};
+	\end{verbatim}
+		Les différents champs de la structure ont les utilités 
+		suivantes :
+		\begin{itemize}
+			\item \verb!context! :
+			\item \verb!stack_id! :
+			\item \verb!status! :
+			\item \verb!next! : %TODO attribut toujours utile
+			
+		\end{itemize}		
 		
 
 		\subsection{Représentation des threads}
@@ -86,11 +109,14 @@
 
 	\section{Fonctionnement de la bibliothèque}
 	Nous nous attacherons dans cette partie à expliquer le
-    fonctionnement interne de notre bibliothèque, plus
-    particulièrement de la version gérant les threads sous forme de
+    fonctionnement interne de notre bibliothèque, et en particulier
+     de la version gérant les threads sous forme de
     liste.
 
-		\subsection{ajout d'un thread}
+		\subsection{Ajout d'un thread}
+		L'ajout d'un thread est fait par l'utilisateur en faisant 
+		appel à la fonction \verb!thread_create()!
+		
 
 		\subsection{Recherche du prochain thread à exécuter}
 
