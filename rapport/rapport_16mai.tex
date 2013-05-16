@@ -119,7 +119,7 @@
 	Nous nous attacherons dans cette partie à expliquer le
     fonctionnement interne de notre bibliothèque, et en particulier
      de la version gérant les threads sous forme de
-    liste.
+    liste et multi coeur.
 
 		\subsection{Ajout d'un thread}
 		L'ajout d'un thread est fait par l'utilisateur en faisant 
@@ -138,12 +138,29 @@
 		pour éviter les accès concurrents.
 
 		\subsection{Recherche du prochain thread à exécuter}
+		Pour trouver le prochain thread a exécuter, nous utilisons la 
+		fonction \verb!next_thread()! qui se charge de parcourir la liste des
+		threads jusqu'à trouver un thread valide qui attend d'être exécuté.\\
+		
+		La structure de données représentant ce thread est ensuite retournée
+		pour que le changement de contexte puisse se faire.
+		
 		
 		\subsection{Récupération de la valeur de retour}
+		Pour récupérer la valeur de retour d'un thread, l'utilisateur fait 
+		appel à la fonction \verb!thread_join()!. Au sein de cette dernière
+		nous passons le statut du thread en \verb!STATUS_JOINING!. Puis
+		tant que ce dernier n'est pas terminé (cette vérification se faisant
+		au sein d'une section critique pour éviter tout accès concurrents)
+		 il passera la main au prochain
+		en faisant appel à \verb!thread_yield()!.
+		Passée cette étape le thread sera retiré de la liste et les 
+		ressources allouées dynamiquement libérée par la fonction
+		\verb!free_thread()!.
 
 		\subsection{Spécificités d'implémentation}
 		
-			\subsubsection{gestion des threads retournants des valeurs}
+			\subsubsection{Gestion des threads retournants des valeurs}
 			Afin d'être sûr que même dans le cas ou l'utilisateur ajoute un
 			thread qui exécute une fonction qui renvoient une valeur nous
 			puissions permettre sa récupération par un join, nous avons 
@@ -195,7 +212,7 @@ void wrapper(void *(*func)(void *), void * funcarg){
         Lorsque les machines multi-processeurs n'étaient pas prise en compte,
         nous avions penché pour une implémentation sans contexte
         d'ordonnancement, chaque thread passant directement la main au
-        suivant à l'aide d'un swapcontext.
+        suivant à l'aide d'un swapcontext.\\
 
 		\subsection{Version multi-coeur et changements}
 		Parmi les objectifs à remplir, il nous avait été proposé de prendre
