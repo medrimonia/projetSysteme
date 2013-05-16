@@ -143,10 +143,16 @@
 
 		\subsection{Spécificités d'implémentation}
 		
-			\subsubsection{gestion des threads retournants des valeurs}
-			description du wrapper
+			\subsubsection{Gestion des threads retournants des valeurs}
+            Tous les threads étant susceptibles de retourner des valeurs, il
+            faut être capable de récupérer celles-ci, que le thread se
+            termine à l'aide d'un \verb!thread_exit! ou simplement d'un
+            \verb!return!. Afin d'atteindre ce but, nous avons utilisé un
+            \verb!wrapper!, une fonction qui se contente d'appeller la
+            fonction spécifiée et de stocker son résultat dans la structure
+            du thread courant.
 			
-			\subsubsection{terminaison et libération de ressources}
+			\subsubsection{Terminaison et libération de ressources}
             Nous avons choisis de libérer les ressources allouées à un thread
             seulement une fois qu'un thread a récupéré sa valeur. Afin de
             diminuer l'empreinte mémoire, il aurait été mieux de libérer
