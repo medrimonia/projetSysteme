@@ -166,17 +166,36 @@ void wrapper(void *(*func)(void *), void * funcarg){
 			de mettre la bonne valeur de retour dans \verb!retval!, de changer
 			le statut du thread et de passer au suivant.
 			
-			\subsubsection{terminaison et libération de ressources}
-			ici parler des fonctions end thread handling etc...
+            \subsubsection{Terminaison et libération de ressources}
+            Nous avons choisis de libérer les ressources allouées à un thread
+            seulement une fois qu'un thread a récupéré sa valeur. Afin de
+            diminuer l'empreinte mémoire, il aurait été mieux de libérer
+            la mémoire de la pile dès qu'un thread se termine, évitant ainsi
+            qu'un groupe de threads morts monopolisent u
+		l'ordonnancement au sein des différentes méthodes à la manière
+        de pthread.ne grande partie de
+            la mémoire inutilement.
+            \paragraph{}
+            Certaines des ressources devant être libérées uniquement lorsque
+            le programme se termine. Nous avons utilisé la fonction
+            \verb!atexit! afin que valgrind signale que toutes les
+            ressources ont bien été libérées. Ce fonctionnement nous a permis
+            d'atteindre cet objectif tant que nous n'utilisions pas les
+            GList.
 		
 
-	\section{ordonnancement}
-	Cette partie sera consacrée à expliquer plus finement comment
-    l'ordonnacement des threads sera mise en place.
+	\section{Ordonnancement}
+    Au cours du projet, nous avons utilisé deux types d'ordonnancement, un
+    avec le support multi-coeur et un autre sans support de multi-coeur. Au
+    cours du projet, nous avons aussi utilisé une astuce qui nous a été
+    donnée afin que lorsqu'un thread fait un \verb!join! sur un autre
+    thread, il soit exécuté dès que celui qu'il attend se termine.
 
 		\subsection{Sans ordonnanceur}
-		l'ordonnancement au sein des différentes méthodes à la manière
-        de pthread.
+        Lorsque les machines multi-processeurs n'étaient pas prise en compte,
+        nous avions penché pour une implémentation sans contexte
+        d'ordonnancement, chaque thread passant directement la main au
+        suivant à l'aide d'un swapcontext.
 
 		\subsection{Version multi-coeur et changements}
 		Parmi les objectifs à remplir, il nous avait été proposé de prendre
