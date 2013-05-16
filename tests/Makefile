@@ -10,7 +10,7 @@ RESULTS=$(SRC:.c=.output)
 
 VALGRINDS=$(SRC:.c=.valgrind)
 
-all: $(RESULTS) $(VALGRINDS)
+all: $(RESULTS) $(VALGRINDS) parallel-speed-compare
 
 valgrinds: $(VALGRINDS)
 
@@ -18,6 +18,11 @@ tests: $(TESTS)
 
 %.output: %.test
 	./$< > $@
+
+parallel-speed-compare: parallel-speed-compare.o
+	$(CC) $(LDFLAGS) $^ -o $@ $(LIBS)
+
+parallel-speed-compare.o: parallel-speed-compare.c
 
 21-create-many.output: 21-create-many.test
 	./$< 50 > $@

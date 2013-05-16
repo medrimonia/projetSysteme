@@ -3,14 +3,13 @@
 #include <assert.h>
 #include <sys/times.h>
 
-#define NB_ITERATIONS 1000 * 1000 * 100
-#define NB_THREADS 4
+#define NB_ITERATIONS 1000 * 1000 * 200
 
 void loop()
 {
     int k;
     int i=0;
-    for (k = 0; k < NB_ITERATIONS * NB_THREADS; k++){
+    for (k = 0; k < NB_ITERATIONS; k++){
         i++;
     }
 }
