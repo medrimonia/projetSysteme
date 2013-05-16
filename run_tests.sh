@@ -11,9 +11,9 @@ make mrproper >/dev/null
 make tests -i >/dev/null 2>/dev/null
 
 NB_TESTS=$(ls *.c | grep "^[0-9].*" | wc -w)
-NB_TESTS_COMPILED=$(ls *.test | wc -w)
+NB_TESTS_COMPILED=$(ls *.test | grep "^[0-9].*" | wc -w)
 
-TESTS=(*.test)
+TESTS=($(find . -name "[0-9]*.test"))
 
 # TESTING RETURN STATUS
 
