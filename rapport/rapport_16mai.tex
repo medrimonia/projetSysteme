@@ -55,14 +55,16 @@
 			pouvoir utiliser valgrind sur notre bibliothèque.
 			\item \verb!status! : le statut actuel du thread, il peut
 			être : \verb!STATUS_RUNNING! lorsque le thread est en 
-			exécution, \verb!STATUS_JOINING! quand un join a été 
-			demandé sur ce thread, \verb!STATUS_WAITING! quand le 
+			exécution, \verb!STATUS_JOINING! quand le thread attend la
+            fin d'un autre thread, \verb!STATUS_WAITING! quand le 
 			thread attend son tour, \verb!STATUS_TERMINATED! quand 
 			le thread a terminé son exécution.
-			\item \verb!next! : %TODO attribut toujours utile ?
-			
-		\end{itemize}		
-		
+			\item \verb!next! : Lorsqu'un thread A effectue un \verb!join!
+              sur un thread B, le thread A met à jour la valeur de B.next en
+              A. Cela permet non seulement que le thread A ne soit jamais pas
+              réveillé pour rien, mais aussi que dès que le thread B
+              s'achève, le thread A soit le prochain à s'exécuter.
+		\end{itemize}
 
 		\subsection{Représentation des threads}
 		Pour pouvoir gérer un ensemble de thread il a fallu que nous
@@ -84,17 +86,17 @@
             par exemple dans les cas de fonctions récursives se
             retrouver dans le cas où il dépasse cette limite.
 			
-			Cependant grâce à cette implementation nous avons tester
+			Cependant grâce à cette implementation nous avons testé
             très rapidement les problèmes d'algorithmique liés à la
             bibliothèque en se focalisant sur les fonctionnalités et
             non pas sur les spécificités d'implémentation.
 
 			\subsubsection{Amélioration et passage listes}
 			Après avoir réussi à mettre au point une version primaire
-            mais fonctionnel de notre bibliothèque, nous avons décider
-            de la faire évoluer en changeant la représentations
+            mais fonctionnelle de notre bibliothèque, nous avons décidé
+            de la faire évoluer en changeant la représentation
             interne de l'ensemble de threads gérés.  L'avantage de
-            cette version été qu'elle nous permettait de gérer un
+            cette version était qu'elle nous permettait de gérer un
             nombre de thread non plus limité en interne, mais par les
             limites physique de l'ordinateur sur lequel elle
             s'exécutait.
@@ -108,7 +110,7 @@
 			
 			En effet la gestion de la mémoire s'est révélé plus
             complexe que ce que nous pensions, et notre bibliothèque
-            laissée une empreinte mémoire après exécution.
+            laissait une empreinte mémoire après exécution.
             Rétrospectivement il aurait été plus intéressant
             d'utiliser une file pour gérer les différents threads. Ce
             dernier point sera abordé dans les améliorations possibles
@@ -162,7 +164,7 @@
 		
 			\subsubsection{Gestion des threads retournants des valeurs}
 			Afin d'être sûr que même dans le cas ou l'utilisateur ajoute un
-			thread qui exécute une fonction qui renvoient une valeur nous
+			thread qui exécute une fonction qui renvot une valeur nous
 			puissions permettre sa récupération par un join, nous avons 
 			utilisé un conteneur pour cette dernière.\\
 			Lors de l'ajout d'un thread ce n'est donc pas directement la
@@ -188,9 +190,9 @@ void wrapper(void *(*func)(void *), void * funcarg){
             seulement une fois qu'un thread a récupéré sa valeur. Afin de
             diminuer l'empreinte mémoire, il aurait été mieux de libérer
             la mémoire de la pile dès qu'un thread se termine, évitant ainsi
-            qu'un groupe de threads morts monopolisent u
-		l'ordonnancement au sein des différentes méthodes à la manière
-        de pthread.ne grande partie de
+            qu'un groupe de threads morts monopolisent
+		    l'ordonnancement au sein des différentes méthodes à la manière
+            de pthread.ne grande partie de
             la mémoire inutilement.
             \paragraph{}
             Certaines des ressources devant être libérées uniquement lorsque
