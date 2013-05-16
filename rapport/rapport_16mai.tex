@@ -239,8 +239,18 @@
 
 
 	\section{Résultats}
-	Version de base fonctionnel et fiable, passage sous liste et
-    multi-coeur
+    Si nous avons réussi à obtenir assez rapidement une première version
+    fiable et fonctionnelle respectant les premiers tests en stockant les
+    threads dans un tableau, le passage aux listes a déjà commencé à poser
+    certains problèmes, car nous souhaitions éliminer toutes les fuites
+    mémoires ce que nous n'avons pas réussi à résoudre, certains problèmes
+    semblant venir de l'implémentation des GList elles mêmes.
+    \paragraph
+    Par la suite, les améliorations se sont révélées assez problématiques,
+    puisque le seul objectif avancé que nous avons réussi à accomplir est le
+    support des machines multi-processeurs et malgré le travail de débugage
+    effectué, il reste parfois des problèmes que nous n'avons pas encore pu
+    comprendre.
 
 	\section{Perspectives}
     Tel qu'il est présenté, le projet pourrait difficilement être repris
