@@ -55,7 +55,10 @@
 			pouvoir utiliser valgrind sur notre bibliothèque.
 			\item \verb!status! : le statut actuel du thread, il peut
 			être : \verb!STATUS_RUNNING! lorsque le thread est en 
-			exécution, \verb!STATUS_JOINING! quand un join a 
+			exécution, \verb!STATUS_JOINING! quand un join a été 
+			demandé sur ce thread, \verb!STATUS_WAITING! quand le 
+			thread attend son tour, \verb!STATUS_TERMINATED! quand 
+			le thread a terminé son exécution.
 			\item \verb!next! : %TODO attribut toujours utile ?
 			
 		\end{itemize}		
@@ -120,7 +123,10 @@
 
 		\subsection{Ajout d'un thread}
 		L'ajout d'un thread est fait par l'utilisateur en faisant 
-		appel à la fonction \verb!thread_create()!
+		appel à la fonction \verb!thread_create()!, fonction à laquelle il
+		passera en paramètre un pointeur sur une structure de thread qui 
+		contiendra l'adresse du thread ajouté et la fonction qu'il doit
+		exécuter.
 		
 
 		\subsection{Recherche du prochain thread à exécuter}
