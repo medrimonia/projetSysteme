@@ -10,8 +10,8 @@
 
 \title{Projet de système d'exploitation}
 \subtitle{Soutenance}
-\author{Tony SANCHEZ, Ludovic HOFER}
-\institute{ENSERIB-MATMECA}
+\author{Tony SANCHEZ, Ludovic HOFER, Henri GARDON, Pierre-Alain POCQUET}
+\institute{ENSEIRB-MATMECA}
  
 \begin{document}
  
@@ -38,15 +38,41 @@
 \begin{frame}
 \frametitle{Structure de thread}
  
-Contenu du transparent.
+\begin{description}
+	\item[context] Le contexte d'exécution du thread
+	\item[stack\_id] Un attribut nécessaire pour valgrind
+	\item[status] Le statut du thread
+	\item[next] Le thread a exécuter à la suite d'un join
+	\item[freeNeeded] Empêche de libérer les ressources du thread de base
+	\item[retval] La valeur de retour du thread
+\end{description}
  
 \end{frame}
+
+\begin{frame}
+\frametitle{Les threads}
+
+\begin{itemize}
+\item Première version naïve et utilisation de tableau
+\item Passage à une implémentation sous forme de liste
+\item Amélioration possible et passage à une ou des file(s)
+	
+\end{itemize}
+ 
+\end{frame}
+
 
 \subsection{Changement de contexte}
 
 \begin{frame}
   \frametitle{Changement de contexte}
-  Contenu du transparent.
+  Le changement de contexte s'effectue en deux étapes
+  
+  \begin{description}
+  \item[Recherche du prochain] Ici on parcours notre(nos) ensemble(s) de thread, jusqu'à trouver un candidat.
+  \item[Changement de contexte] Puis grâce à la fonction \verb!swapcontext()! on opère au passage dans ce nouveau contexte.
+	
+\end{description}
 
 \end{frame}
 
@@ -161,6 +187,20 @@ Contenu du transparent.
 
 \begin{frame}
   \frametitle{Perspectives}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Préemption}
+  \begin{itemize}
+    \item Utilisation d'un timer virtuel
+      \begin{itemize}
+      \item signal $ITIMER\_VIRTUAL$ toute les $TIMESLICE$ sec
+      \item décroissant lors de l'exécution du processus
+      \item appel à $thread\_yield$ pour changer de contexte
+      \end{itemize}
+    \item Désactiver préemption pour les fonctions critiques.
+    \item Test non concluant
+  \end{itemize}
 \end{frame}
 
 \section{Conclusion}
