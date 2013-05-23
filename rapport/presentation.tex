@@ -22,8 +22,13 @@
 \begin{frame}
 \section{Introduction}
 \frametitle{Introduction}
- 
-Contenu du transparent.
+
+\begin{itemize}
+\item Implémentation minimale de l'interface \verb!pthread!
+\item Ajout du support de fonctionnalités avancées
+\item Validation du fonctionnement par des tests
+\item Comparaison des performances
+\end{itemize}
  
 \end{frame}
 
@@ -47,15 +52,15 @@ Contenu du transparent.
 
 \subsection{Libération des ressources}
 
-\begin{frame}
+\begin{frame}[containsverbatim]
   \frametitle{Libération des ressources}
   \begin{itemize}
   \item Destruction des threads
   \item Mémoire des piles
-%    \begin{itemize}
-%    \item En même temps que les threads $\rightarrow $ Mauvaise idée!
-%    \item À libérer dès l'appel à \verb!thread_exit(...)!
-%    \end{itemize}
+    \begin{itemize}
+    \item En même temps que les threads $\rightarrow $ Mauvaise idée!
+    \item À libérer dès l'appel à \verb!thread_exit(...)!
+    \end{itemize}
   \item Empreinte mémoire de la bibliothèque
     $\rightarrow $ \verb!atexit(...)!
   \end{itemize}
@@ -68,6 +73,36 @@ Contenu du transparent.
   \begin{itemize}
     \item Version mono-core
     \item Version multi-core
+  \end{itemize}
+\end{frame}
+
+\subsection{Mutex}
+
+\begin{frame}
+  \frametitle{Mutex}
+%  \begin{itemize}
+%    \item Utilisation des \verb!pthread_mutex!
+%    \item \verb!thread_mutex_lock! est équivalent à une boucle sur
+%      \verb!pthread_mutex_try_lock!
+%  \end{itemize}
+\end{frame}
+
+\subsection{Support multi-coeur}
+
+\begin{frame}
+  \frametitle{Support multi-coeur}
+  \begin{itemize}
+    \item Utilisation de $k$ threads noyaux
+      \begin{itemize}
+      \item Défini à la compilation
+      \item Présence des $k$ threads noyaux, même s'il y a un unique thread
+        actif
+      \end{itemize}
+    \item Si $k$ est plus grand que $nb\_threads\_actifs$
+      \begin{itemize}
+        \item Les threads noyaux en trop sont en attente active sur un sleep
+        \item Après chaque sleep, les threads parcourent la liste de thread
+      \end{itemize}
   \end{itemize}
 \end{frame}
 
