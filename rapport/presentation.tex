@@ -19,7 +19,7 @@
 
 \tableofcontents
  
-\begin{frame} % premier transparent
+\begin{frame}
 \section{Introduction}
 \frametitle{Introduction}
  
@@ -27,22 +27,73 @@ Contenu du transparent.
  
 \end{frame}
 
-\begin{frame} % premier transparent
-\section{Principe de fonctionnement général}
+\section{Principes de fonctionnement général}
 \subsection{Représentation des structures}
-\frametitle{structure de thread}
+
+\begin{frame}
+\frametitle{Structure de thread}
  
 Contenu du transparent.
  
 \end{frame}
 
-\begin{frame} % premier transparent
 \subsection{Changement de contexte}
- 
-Contenu du transparent.
- 
+
+\begin{frame}
+  \frametitle{Changement de contexte}
+  Contenu du transparent.
+
 \end{frame}
 
+\subsection{Libération des ressources}
+
+\begin{frame}
+  \frametitle{Libération des ressources}
+  \begin{itemize}
+  \item Destruction des threads
+  \item Mémoire des piles
+%    \begin{itemize}
+%    \item En même temps que les threads $\rightarrow $ Mauvaise idée!
+%    \item À libérer dès l'appel à \verb!thread_exit(...)!
+%    \end{itemize}
+  \item Empreinte mémoire de la bibliothèque
+    $\rightarrow $ \verb!atexit(...)!
+  \end{itemize}
+\end{frame}
+
+\subsection{Ordonnancement}
+
+\begin{frame}
+  \frametitle{Ordonnancement}
+  \begin{itemize}
+    \item Version mono-core
+    \item Version multi-core
+  \end{itemize}
+\end{frame}
+
+\section{Tests}
+
+\begin{frame}
+  \frametitle{Tests}
+\end{frame}
+
+\section{Performances}
+
+\begin{frame}
+  \frametitle{Performances}
+\end{frame}
+
+\section{Perspectives}
+
+\begin{frame}
+  \frametitle{Perspectives}
+\end{frame}
+
+\section{Conclusion}
+
+\begin{frame}
+  \frametitle{Conclusion}
+\end{frame}
 
 
  

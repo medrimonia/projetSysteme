@@ -1,9 +1,9 @@
-rapport_16mai.pdf: rapport_16mai.tex
-	pdflatex $< && pdflatex $<
+OBJECTS=presentation.pdf rapport_16mai.pdf rapport_int.pdf
 
-rapport_int.pdf: rapport_int.tex
-	pdflatex rapport_int.tex
-	pdflatex rapport_int.tex
+all: ${OBJECTS}
+
+%.pdf: %.tex
+	pdflatex $< && pdflatex $<
 
 
 clean:
