@@ -56,6 +56,9 @@ Contenu du transparent.
   \frametitle{Libération des ressources}
   \begin{itemize}
   \item Destruction des threads
+    \begin{itemize}
+      \item Lorsque le résultat est récupéré par \verb!thread_join!
+    \end{itemize}
   \item Mémoire des piles
     \begin{itemize}
     \item En même temps que les threads $\rightarrow $ Mauvaise idée!
@@ -63,6 +66,12 @@ Contenu du transparent.
     \end{itemize}
   \item Empreinte mémoire de la bibliothèque
     $\rightarrow $ \verb!atexit(...)!
+    \begin{itemize}
+      \item Permet de valider par des tests l'absence de fuites mémoires
+        simplement.
+      \item Important pour une bibliothèque
+      \item Problèmes internes aux GList $\rightarrow $ Abandon de ces tests
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -78,38 +87,68 @@ Contenu du transparent.
 
 \subsection{Mutex}
 
-\begin{frame}
+\begin{frame}[containsverbatim]
   \frametitle{Mutex}
-%  \begin{itemize}
-%    \item Utilisation des \verb!pthread_mutex!
-%    \item \verb!thread_mutex_lock! est équivalent à une boucle sur
-%      \verb!pthread_mutex_try_lock!
-%  \end{itemize}
+  \begin{itemize}
+    \item Utilisation des \verb!pthread_mutex!
+    \item \verb!thread_mutex_lock!
+      \begin{itemize}
+        \item boucle sur \verb!pthread_mutex_trylock!
+          \begin{description}
+          \item[Succès :] sort de la boucle
+          \item[Échec :]  \verb!thread_yield!
+          \end{description}
+        \item Utilisation de \verb!try_lock! nécessaire pour le
+          multi\_coeur sans préemption.
+      \end{itemize}
+      \item Idée
+        \begin{itemize}
+        \item Associer une file de threads en attente à chaque verrou
+        \item Changer le statut du thread
+        \item Avantage : évite l'attente active et des changements de
+          contexte inutiles
+        \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \subsection{Support multi-coeur}
 
-\begin{frame}
+\begin{frame}[containsverbatim]
   \frametitle{Support multi-coeur}
   \begin{itemize}
-    \item Utilisation de $k$ threads noyaux
+    \item Utilisation de \verb!k! threads noyaux
       \begin{itemize}
       \item Défini à la compilation
-      \item Présence des $k$ threads noyaux, même s'il y a un unique thread
-        actif
+      \item Présence des \verb!k! threads noyaux, même s'il y a un unique
+        thread actif
       \end{itemize}
-    \item Si $k$ est plus grand que $nb\_threads\_actifs$
+    \item Si \verb!k! est plus grand que \verb!nb_threads_actifs!
       \begin{itemize}
-        \item Les threads noyaux en trop sont en attente active sur un sleep
-        \item Après chaque sleep, les threads parcourent la liste de thread
+        \item Les threads noyaux en trop sont en attente active sur un
+          \verb!sleep!
+        \item Après chaque \verb!sleep!, les threads parcourent la liste de
+          thread
+      \end{itemize}
+    \item Utilisation de \verb!pthread_mutex! afin de synchroniser les
+      threads noyaux
+    \item Implémentation difficile et peu efficace à cause des listes
+      \begin{itemize}
+      \item Nécessité de conserver l'indice de chaque thread.
+      \item Parcours de toute la liste même si aucun thread n'est disponible
+      \item Lors d'un \verb!thread-join!, mise à jour de tous les index
       \end{itemize}
   \end{itemize}
 \end{frame}
 
 \section{Tests}
 
-\begin{frame}
+\begin{frame}[containsverbatim]
   \frametitle{Tests}
+  \begin{itemize}
+    \item Script permettant de tester tous les tests avec affichage des
+      résultats
+    \item Avant les GList : validation des tests par \verb!valgrind!
+  \end{itemize}
 \end{frame}
 
 \section{Performances}
