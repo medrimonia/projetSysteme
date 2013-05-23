@@ -174,6 +174,13 @@
     \item Script permettant de tester tous les tests avec affichage des
       résultats
     \item Avant les GList : validation des tests par \verb!valgrind!
+    \item Ajout de fichiers de tests pour valider le fonctionnement des mutex
+    \item Résultats finaux :
+      \begin{description}
+        \item[Mono-core :] Tous les tests réussissent
+        \item[Multi-core :] Échec occasionnel de certains tests, source
+          inconnue
+      \end{description}
   \end{itemize}
 \end{frame}
 
@@ -181,6 +188,19 @@
 
 \begin{frame}
   \frametitle{Performances}
+  \begin{itemize}
+    \item Mauvaises performances théoriques sur un grand nombre de threads
+    \item Possibilité de traitement parallèle validée par l'expérience
+    \item Absence de tests prouvant la meilleure efficacité de \verb!pthread!
+      \begin{itemize}
+        \item Notre module de thread ne réussit plus à allouer de la mémoire
+          à plus de 500 threads simultanés.
+        \item Avec cette limite notre test ne montre pas de différence
+          flagrante
+        \item L'absence de préemption rend difficile l'exécution de certains
+          tests.
+      \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \section{Perspectives}
@@ -207,6 +227,22 @@
 
 \begin{frame}
   \frametitle{Conclusion}
+  \begin{itemize}
+  \item Certains objectifs ont été atteint, mais l'essentiel du projet réside
+    dans l'apprentissage
+  \item Compréhension des difficultés inhérentes à l'implémentation
+    \begin{itemize}
+    \item Modularité nécessaire
+    \item Utilisation de structures adaptées pour l'ordonnancement
+    \item Éviter l'attente active $\rightarrow$ difficile!
+    \item La présence de modules facilite l'implémentation d'autres modules 
+    \end{itemize}
+  \item Sujet intéressant mais résultat peu satisfaisant
+    \begin{itemize}
+    \item Dynamique de groupe inexistante
+    \item Problème de motivation
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 
