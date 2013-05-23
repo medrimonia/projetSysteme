@@ -10,8 +10,8 @@
 
 \title{Projet de système d'exploitation}
 \subtitle{Soutenance}
-\author{Tony SANCHEZ, Ludovic HOFER}
-\institute{ENSERIB-MATMECA}
+\author{Tony SANCHEZ, Ludovic HOFER, Henri GARDON, Pierre-Alain POCQUET}
+\institute{ENSEIRB-MATMECA}
  
 \begin{document}
  
@@ -122,6 +122,20 @@ Contenu du transparent.
 
 \begin{frame}
   \frametitle{Perspectives}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Préemption}
+  \begin{itemize}
+    \item Utilisation d'un timer virtuel
+      \begin{itemize}
+      \item signal $ITIMER\_VIRTUAL$ toute les $TIMESLICE$ sec
+      \item décroissant lors de l'exécution du processus
+      \item appel à $thread\_yield$ pour changer de contexte
+      \end{itemize}
+    \item Désactiver préemption pour les fonctions critiques.
+    \item Test non concluant
+  \end{itemize}
 \end{frame}
 
 \section{Conclusion}
